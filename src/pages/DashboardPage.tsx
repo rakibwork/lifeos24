@@ -131,7 +131,7 @@ const DashboardPage = () => {
         onProfile={() => {}}
       />
 
-      <div className="max-w-5xl mx-auto px-4 py-4 space-y-4">
+      <main className="max-w-6xl mx-auto p-3 md:p-8 space-y-4 md:space-y-6">
         {/* AI Assistant */}
         <AIAssistant data={data} goals={goals} />
 
@@ -139,16 +139,15 @@ const DashboardPage = () => {
         <SummaryCards data={data} accounts={accounts} monthlyExpense={monthlyExpense} extraSettings={extraSettings} />
 
         {/* Mood + Water + Progress row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
           <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
           <ProgressCard progress={progress} />
         </div>
 
-        {/* Main content - 2 column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left column */}
-          <div className="space-y-4">
+        {/* Main content - 8/4 column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+          <div className="md:col-span-8 space-y-4 md:space-y-6">
             <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
             <GoalCard goals={goals} onGoalsChange={updateGoals} />
             <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
@@ -158,8 +157,7 @@ const DashboardPage = () => {
             <WeeklyAnalytics />
           </div>
 
-          {/* Right column */}
-          <div className="space-y-4">
+          <div className="md:col-span-4 space-y-4 md:space-y-6">
             <NamazTracker namaz={data.namaz} onNamazChange={namaz => updateData({ namaz })} />
             <MedicineCard
               medicines={extraSettings.medicines || []}
@@ -173,11 +171,11 @@ const DashboardPage = () => {
             />
             <ExpenseCard expenses={data.expenses} onExpensesChange={expenses => updateData({ expenses })} />
             <HabitCard habits={data.habits} onHabitsChange={habits => updateData({ habits })} />
-            <SleepTracker sleepStart={data.sleepStart} sleepEnd={data.sleepEnd} sleepHours={data.sleepHours} onUpdate={(sleepStart, sleepEnd, sleepHours) => updateData({ sleepStart, sleepEnd, sleepHours })} />
             <QuickNoteCard notes={quickNotes} onNotesChange={updateQuickNotes} />
+            <SleepTracker sleepStart={data.sleepStart} sleepEnd={data.sleepEnd} sleepHours={data.sleepHours} onUpdate={(sleepStart, sleepEnd, sleepHours) => updateData({ sleepStart, sleepEnd, sleepHours })} />
           </div>
         </div>
-      </div>
+      </main>
 
       {showSettings && (
         <SettingsModal
