@@ -110,28 +110,28 @@ const ProfileModal = ({ onClose, onLogout }: Props) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-foreground/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-card rounded-2xl p-8 max-w-xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-black">প্রোফাইল আপডেট</h2>
-            <p className="text-xs text-muted-foreground">আপনার তথ্য পরিবর্তন করুন</p>
+            <h2 className="text-xl font-black">প্রোফাইল আপডেট</h2>
+            <p className="text-sm text-muted-foreground">আপনার তথ্য পরিবর্তন করুন</p>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl">✕</button>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl">✕</button>
         </div>
 
         {/* Avatar */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-3xl text-primary font-black border-4 border-primary/20">
+          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center text-4xl text-primary font-black border-4 border-primary/20">
             {profile.full_name.charAt(0) || "?"}
           </div>
-          <p className="text-xs text-primary mt-2">ছবি পরিবর্তন করতে ক্লিক করুন (সর্বোচ্চ 50KB)</p>
+          <p className="text-sm text-primary mt-2">ছবি পরিবর্তন করতে ক্লিক করুন (সর্বোচ্চ 50KB)</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* পূর্ণ নাম */}
           <div>
-            <label className="text-xs font-bold text-foreground">পূর্ণ নাম</label>
-            <input value={profile.full_name} onChange={e => update("full_name", e.target.value)} className="w-full p-3 rounded-xl bg-secondary border border-border text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50" />
+            <label className="text-sm font-bold text-foreground">পূর্ণ নাম</label>
+            <input value={profile.full_name} onChange={e => update("full_name", e.target.value)} className="w-full p-4 rounded-xl bg-secondary border border-border text-base font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50" />
           </div>
 
           {/* মোবাইল */}
