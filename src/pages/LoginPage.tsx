@@ -21,43 +21,43 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <div className="bg-card rounded-3xl shadow-xl p-8 w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-lg">⚡</div>
-          <h1 className="text-2xl font-black text-primary">Life OS</h1>
+      <div className="bg-card rounded-3xl shadow-xl p-10 w-full max-w-md">
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xl">⚡</div>
+          <h1 className="text-3xl font-black text-primary">Life OS</h1>
         </div>
-        <p className="text-center text-sm text-muted-foreground mb-6">আপনার জীবন পরিচালনার সহচর</p>
+        <p className="text-center text-base text-muted-foreground mb-8">আপনার জীবন পরিচালনার সহচর</p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5">
           <input
             type="email"
             placeholder="আপনার ইমেইল"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className="w-full p-3 rounded-xl bg-secondary border border-border text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full p-4 rounded-xl bg-secondary border border-border text-base font-medium text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50"
           />
           <input
             type="password"
             placeholder="পাসওয়ার্ড"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full p-3 rounded-xl bg-secondary border border-border text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full p-4 rounded-xl bg-secondary border border-border text-base font-medium text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50"
           />
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition disabled:opacity-50"
+            className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? "লোড হচ্ছে..." : "লগইন করুন"}
           </button>
         </form>
 
-        <div className="text-center mt-4 space-y-2">
-          <button onClick={() => navigate("/forgot-password")} className="text-sm text-primary font-bold hover:underline">
+        <div className="text-center mt-6 space-y-3">
+          <button onClick={() => navigate("/forgot-password")} className="text-base text-primary font-bold hover:underline">
             পাসওয়ার্ড ভুলে গেছেন?
           </button>
           <div>
-            <button onClick={() => navigate("/register")} className="text-sm text-primary font-bold hover:underline">
+            <button onClick={() => navigate("/register")} className="text-base text-primary font-bold hover:underline">
               নতুন অ্যাকাউন্ট তৈরি করুন
             </button>
           </div>
