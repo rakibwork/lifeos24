@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, saveExtraSettings, getMonthlyExpenses, getProfile } from "@/lib/dataStore";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, saveExtraSettings, getMonthlyExpenses } from "@/lib/dataStore";
 import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, UserProfile, AccountPerson, Medicine } from "@/lib/types";
 import NavBar from "@/components/dashboard/NavBar";
 import NotificationBell from "@/components/dashboard/NotificationBell";
@@ -22,6 +24,7 @@ import MedicineCard from "@/components/dashboard/MedicineCard";
 import DailySummary from "@/components/dashboard/DailySummary";
 import WeeklyAnalytics from "@/components/dashboard/WeeklyAnalytics";
 import SettingsModal from "@/components/dashboard/SettingsModal";
+import ProfileModal from "@/components/dashboard/ProfileModal";
 
 const defaultDayData: DayData = {
   mood: '', water: 0, tasks: [], expenses: [],
@@ -31,8 +34,9 @@ const defaultDayData: DayData = {
 };
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userName, setUserName] = useState("ব্যবহারকারী");
   const [data, setData] = useState<DayData>(defaultDayData);
   const [goals, setGoalsState] = useState<Goal[]>([]);
   const [permNotes, setPermNotesState] = useState<PermNote[]>([]);
@@ -43,7 +47,20 @@ const DashboardPage = () => {
   const [namazTimes, setNamazTimes] = useState<NamazTimes>({ fajr: "05:30", dhuhr: "13:30", asr: "16:45", maghrib: "18:20", isha: "20:00" });
   const [extraSettings, setExtraSettings] = useState<ExtraSettings>({ dailyLimit: 500, monthlyLimit: 15000, sleepTime: "22:00" });
   const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Load user name from profile
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).single();
+        if (profile?.full_name) setUserName(profile.full_name);
+      }
+    };
+    loadUser();
+  }, [showProfile]); // reload when profile modal closes
 
   useEffect(() => {
     const saved = loadDayData(selectedDate);
@@ -57,7 +74,6 @@ const DashboardPage = () => {
   }, [selectedDate]);
 
   useEffect(() => {
-    setProfile(getProfile());
     setGoalsState(getGoals());
     setPermNotesState(getPermNotes());
     setAccountsState(getAccounts());
@@ -101,6 +117,11 @@ const DashboardPage = () => {
     saveQuickNotes(notes);
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
   const progress = (() => {
     const namazP = Object.values(data.namaz).filter(Boolean).length * 5;
     const waterP = Math.min(data.water * 2, 16);
@@ -122,12 +143,12 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <NavBar
-        userName={profile?.name || 'ব্যবহারকারী'}
+        userName={userName}
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
         onSettings={() => setShowSettings(true)}
-        onProfile={() => {}}
-        onLogout={() => {}}
+        onProfile={() => setShowProfile(true)}
+        onLogout={handleLogout}
         isAdmin={false}
         notificationSlot={
           <NotificationBell data={data} namazTimes={namazTimes} extraSettings={extraSettings} />
@@ -181,6 +202,13 @@ const DashboardPage = () => {
           extraSettings={extraSettings}
           habitDefs={habitDefs}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {showProfile && (
+        <ProfileModal
+          onClose={() => setShowProfile(false)}
+          onLogout={handleLogout}
         />
       )}
     </div>
