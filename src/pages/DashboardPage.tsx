@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, saveExtraSettings, getMonthlyExpenses, getProfile } from "@/lib/dataStore";
 import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, UserProfile, AccountPerson, Medicine } from "@/lib/types";
 import NavBar from "@/components/dashboard/NavBar";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import MoodTracker from "@/components/dashboard/MoodTracker";
 import WaterTracker from "@/components/dashboard/WaterTracker";
@@ -44,7 +45,6 @@ const DashboardPage = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load date-specific data
   useEffect(() => {
     const saved = loadDayData(selectedDate);
     if (saved) {
@@ -56,7 +56,6 @@ const DashboardPage = () => {
     }
   }, [selectedDate]);
 
-  // Load persistent data
   useEffect(() => {
     setProfile(getProfile());
     setGoalsState(getGoals());
@@ -70,7 +69,6 @@ const DashboardPage = () => {
     setLoading(false);
   }, []);
 
-  // Refresh monthly expense
   useEffect(() => {
     setMonthlyExpense(getMonthlyExpenses());
   }, [data.expenses]);
@@ -129,23 +127,23 @@ const DashboardPage = () => {
         onDateChange={setSelectedDate}
         onSettings={() => setShowSettings(true)}
         onProfile={() => {}}
+        onLogout={() => {}}
+        isAdmin={false}
+        notificationSlot={
+          <NotificationBell data={data} namazTimes={namazTimes} extraSettings={extraSettings} />
+        }
       />
 
       <main className="max-w-6xl mx-auto p-3 md:p-8 space-y-4 md:space-y-6">
-        {/* AI Assistant */}
         <AIAssistant data={data} goals={goals} />
-
-        {/* Summary Cards */}
         <SummaryCards data={data} accounts={accounts} monthlyExpense={monthlyExpense} extraSettings={extraSettings} />
 
-        {/* Mood + Water + Progress row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
           <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
           <ProgressCard progress={progress} />
         </div>
 
-        {/* Main content - 8/4 column layout */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
           <div className="md:col-span-8 space-y-4 md:space-y-6">
             <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
