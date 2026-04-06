@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
+import { format } from "date-fns";
 
 interface Props {
   userName: string;
@@ -6,46 +7,134 @@ interface Props {
   onDateChange: (date: string) => void;
   onSettings?: () => void;
   onProfile?: () => void;
+  onLogout?: () => void;
+  isAdmin?: boolean;
   notificationSlot?: ReactNode;
 }
 
-const NavBar = ({ userName, selectedDate, onDateChange, onSettings, onProfile, notificationSlot }: Props) => {
+const NavBar = ({ userName, selectedDate, onDateChange, onSettings, onProfile, onLogout, isAdmin, notificationSlot }: Props) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [pendingDate, setPendingDate] = useState(selectedDate);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setPendingDate(selectedDate);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const formatDateDisplay = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return dateStr;
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  };
+
   return (
-    <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+    <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border p-3 md:p-4 shadow-sm">
+      <div className="max-w-6xl mx-auto flex justify-between items-center gap-2">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🌿</span>
-          <span className="font-bold text-lg">Life <span className="text-primary">OS</span></span>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="w-9 h-9 md:w-10 md:h-10 bg-primary rounded-xl md:rounded-2xl flex items-center justify-center text-primary-foreground shadow-lg text-base md:text-lg">⚡</div>
+          <h1 className="text-lg md:text-2xl font-black tracking-tight text-foreground hidden sm:block">Life <span className="text-primary">OS</span></h1>
         </div>
 
-        {/* Date */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-muted-foreground">{selectedDate}</span>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={e => onDateChange(e.target.value)}
-            className="w-8 h-8 opacity-0 absolute cursor-pointer"
-          />
-          <button onClick={() => onDateChange(selectedDate)} className="text-sm">📅</button>
-        </div>
-
-        {/* Nav buttons */}
-        <div className="flex items-center gap-1">
-          <button className="px-3 py-1.5 rounded-full text-xs font-bold bg-primary text-primary-foreground">ড্যাশ</button>
-          <button className="px-3 py-1.5 rounded-full text-xs font-bold bg-secondary text-muted-foreground">নম্বর</button>
-          {onSettings && (
-            <button onClick={onSettings} className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-sm">⚙️</button>
-          )}
-          {notificationSlot}
-          {onProfile && (
-            <button onClick={onProfile} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-life-indigo-light text-life-indigo text-xs font-bold">
-              🎓 {userName}
+        {/* Right section */}
+        <div className="flex items-center gap-1.5 md:gap-2">
+          {/* Date picker - collapsible on mobile */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            <div className="relative">
+              <input
+                type="date"
+                value={pendingDate}
+                onChange={(e) => setPendingDate(e.target.value)}
+                className="bg-card border border-border rounded-full px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 w-36 cursor-pointer"
+                style={{ color: 'transparent', caretColor: 'transparent' }}
+              />
+              <span className="absolute inset-0 flex items-center px-3 text-sm font-bold text-foreground pointer-events-none">
+                {formatDateDisplay(pendingDate)}
+              </span>
+            </div>
+            <button
+              onClick={() => onDateChange(pendingDate)}
+              className="bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-bold hover:opacity-90 transition"
+            >
+              দেখুন
             </button>
-          )}
+            <button
+              onClick={() => { const today = format(new Date(), 'yyyy-MM-dd'); setPendingDate(today); onDateChange(today); }}
+              className="bg-secondary text-foreground px-3 py-1.5 rounded-full text-xs font-bold hover:bg-secondary/80 transition border border-border"
+            >
+              আজ
+            </button>
+          </div>
+
+          {/* Mobile date toggle */}
+          <button
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            className="sm:hidden w-9 h-9 flex items-center justify-center rounded-full bg-secondary border border-border hover:border-primary transition text-sm"
+          >
+            📅
+          </button>
+
+          {/* Profile */}
+          <div className="relative" ref={menuRef}>
+            <button onClick={() => setMenuOpen(!menuOpen)} className="flex items-center gap-1.5 bg-card border border-border px-2 md:px-3 py-1.5 rounded-full text-sm font-bold text-foreground hover:border-primary transition">
+              <span className="w-7 h-7 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-black">{userName.charAt(0)}</span>
+              <span className="hidden md:inline text-sm">{userName}</span>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-xl w-44 overflow-hidden animate-fade-in-up z-50">
+                {onSettings && <button onClick={() => { onSettings(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary transition flex items-center gap-2">⚙️ সেটিংস</button>}
+                {onProfile && <button onClick={() => { onProfile(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary transition flex items-center gap-2">👤 প্রোফাইল</button>}
+                {isAdmin && (
+                  <button onClick={() => { setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary transition flex items-center gap-2">🛡️ এডমিন</button>
+                )}
+                {onLogout && <button onClick={onLogout} className="w-full text-left px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/10 transition flex items-center gap-2">🚪 লগআউট</button>}
+              </div>
+            )}
+          </div>
+
+          {/* Notification */}
+          {notificationSlot}
         </div>
       </div>
+
+      {/* Mobile date picker dropdown */}
+      {showDatePicker && (
+        <div className="sm:hidden mt-3 flex items-center gap-2 animate-fade-in-up">
+          <div className="relative flex-1">
+            <input
+              type="date"
+              value={pendingDate}
+              onChange={(e) => setPendingDate(e.target.value)}
+              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+              style={{ color: 'transparent', caretColor: 'transparent' }}
+            />
+            <span className="absolute inset-0 flex items-center px-3 text-sm font-bold text-foreground pointer-events-none">
+              {formatDateDisplay(pendingDate)}
+            </span>
+          </div>
+          <button
+            onClick={() => { onDateChange(pendingDate); setShowDatePicker(false); }}
+            className="bg-primary text-primary-foreground px-3 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition"
+          >
+            দেখুন
+          </button>
+          <button
+            onClick={() => { const today = format(new Date(), 'yyyy-MM-dd'); setPendingDate(today); onDateChange(today); setShowDatePicker(false); }}
+            className="bg-secondary text-foreground px-3 py-2 rounded-xl text-xs font-bold hover:bg-secondary/80 transition border border-border"
+          >
+            আজ
+          </button>
+        </div>
+      )}
     </nav>
   );
 };

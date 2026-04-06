@@ -1,5 +1,5 @@
 const ProgressCard = ({ progress }: { progress: number }) => (
-  <div className="bg-card rounded-2xl p-4 border-2 border-life-emerald shadow-sm">
+  <div className="bg-card rounded-2xl p-4 border-2 border-r-4 border-life-emerald shadow-sm">
     <div className="flex items-center justify-between mb-2">
       <h3 className="text-sm font-bold">সামগ্রিক অগ্রগতি</h3>
       <span className="text-sm font-bold text-primary">{progress}%</span>
