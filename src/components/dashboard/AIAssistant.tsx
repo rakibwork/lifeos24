@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { DayData, Goal } from "@/lib/types";
-import { getNamazTimes } from "@/lib/dataStore";
+import { getNamazTimes, getExtraSettings } from "@/lib/dataStore";
 
 interface Props {
   data: DayData;
@@ -16,6 +16,7 @@ const AIAssistant = ({ data, goals }: Props) => {
       const msgs: string[] = [];
       const now = new Date();
       const namazTimes = getNamazTimes();
+      const settings = getExtraSettings();
 
       const prayerNames: Record<string, string> = { fajr: "ফজর", dhuhr: "যোহর", asr: "আসর", maghrib: "মাগরিব", isha: "এশা" };
       const missed: string[] = [];
@@ -35,36 +36,35 @@ const AIAssistant = ({ data, goals }: Props) => {
       if (overdue.length > 0) msgs.push(`⚠️ "${overdue[0].text}" কাজটি সময়সীমা পেরিয়ে গেছে!`);
 
       const todayExp = data.expenses.reduce((s, e) => s + e.amt, 0);
-      if (todayExp > 0) msgs.push(`💸 আজকের খরচ ৳${todayExp}।`);
+      if (todayExp > settings.dailyLimit) msgs.push(`💸 আজকের খরচ বাজেট (৳${settings.dailyLimit}) ছাড়িয়ে গেছে!`);
 
-      if (goals.length > 0) {
-        const nearGoal = goals.find(g => {
-          const diff = new Date(g.target).getTime() - Date.now();
-          return diff > 0 && diff < 86400000;
-        });
-        if (nearGoal) msgs.push(`🎯 "${nearGoal.title}" লক্ষ্যটি আগামীকালের মধ্যে শেষ!`);
-      }
-
-      if (msgs.length === 0) msgs.push("✅ সব ঠিক আছে! চালিয়ে যান। 🎉");
+      const habitsDone = data.habits.filter(h => h.checked).length;
+      if (data.habits.length > 0 && habitsDone < data.habits.length) msgs.push(`📋 রুটিনের ${data.habits.length - habitsDone}টি কাজ বাকি আছে।`);
+      if (goals.length > 0) msgs.push(`🎯 "${goals[0].title}" লক্ষ্যে আজ কোন পদক্ষেপ নিয়েছেন?`);
+      if (data.mood === 'sad') msgs.push(`💛 মন খারাপ? একটু বাইরে ঘুরে আসুন বা পছন্দের কিছু করুন।`);
+      if (data.mood === 'amazing') msgs.push(`🔥 মাশাআল্লাহ! আপনি দারুণ করছেন, এভাবে চালিয়ে যান!`);
+      if (now.getHours() >= 22) msgs.push(`🌙 ঘুমানোর সময় হয়ে গেছে! মোবাইল রেখে ঘুমিয়ে পড়ুন।`);
+      if (msgs.length === 0) msgs.push(`👍 আপনি দারুণভাবে সবকিছু ম্যানেজ করছেন! এভাবে চালিয়ে যান।`);
       setInsights(msgs);
     };
+
     buildInsights();
+    const interval = setInterval(buildInsights, 60000);
+    return () => clearInterval(interval);
   }, [data, goals]);
 
   useEffect(() => {
     if (insights.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % insights.length);
-    }, 5000);
+    const interval = setInterval(() => setCurrentIndex(i => (i + 1) % insights.length), 5000);
     return () => clearInterval(interval);
   }, [insights.length]);
 
   return (
-    <div className="bg-gradient-to-r from-primary/10 to-life-indigo-light rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-      <div className="text-3xl">🤖</div>
+    <div className="bg-gradient-to-r from-secondary to-secondary/50 rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-border">
+      <div className="text-4xl animate-bounce-slow flex-shrink-0">🤖</div>
       <div>
-        <div className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">AI Assistant</div>
-        <div className="text-sm font-bold text-foreground animate-fade-in-up">{insights[currentIndex] || "বিশ্লেষণ হচ্ছে..."}</div>
+        <div className="text-[11px] font-black text-primary uppercase tracking-wider mb-0.5">AI Assistant</div>
+        <div className="text-sm font-bold text-foreground animate-fade-in-up">{insights[currentIndex] || "আপনার ডেটা বিশ্লেষণ করা হচ্ছে..."}</div>
       </div>
     </div>
   );
