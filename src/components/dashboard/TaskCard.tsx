@@ -58,7 +58,7 @@ const TaskCard = ({ tasks, onTasksChange }: Props) => {
   };
 
   return (
-    <div className="bg-card rounded-2xl p-4 border-2 border-life-pink shadow-sm">
+    <div className="bg-card rounded-2xl p-4 border-2 border-t-4 border-life-pink shadow-sm">
       <h3 className="text-sm font-bold mb-3 text-life-pink">📅 আজকের কাজ</h3>
       <div className="flex gap-2 mb-3">
         <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="কি কি কাজ করবেন?" className="flex-1 p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground" />

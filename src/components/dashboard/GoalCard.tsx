@@ -33,7 +33,7 @@ const GoalCard = ({ goals, onGoalsChange }: Props) => {
   };
 
   return (
-    <div className="bg-card rounded-2xl p-4 border-2 border-life-emerald shadow-sm">
+    <div className="bg-card rounded-2xl p-4 border-2 border-t-4 border-life-emerald shadow-sm">
       <h3 className="text-sm font-bold mb-3 text-life-emerald">🎯 আমার লক্ষ্য</h3>
       <input value={title} onChange={e => setTitle(e.target.value)} placeholder="লক্ষ্যের নাম..." className="w-full p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground mb-2" />
       <input value={date} onChange={e => setDate(e.target.value)} placeholder="যেমন: 2025-12-31 23:59" className="w-full p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground mb-2" onFocus={e => { e.target.type = 'datetime-local'; }} onBlur={e => { if (!e.target.value) e.target.type = 'text'; }} />
