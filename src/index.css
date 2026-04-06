@@ -136,6 +136,15 @@
   animation: fadeInUp 0.3s ease-out;
 }
 
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-bounce-slow {
+  animation: bounceSlow 2s ease-in-out infinite;
+}
+
 .task-warning {
   animation: flashWarning 1s infinite;
   border-color: hsl(48 96% 53%) !important;
