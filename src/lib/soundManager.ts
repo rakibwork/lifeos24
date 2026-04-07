@@ -113,7 +113,10 @@ export function speakBengali(text: string): void {
 
     // Try to find a Bengali voice
     const voices = window.speechSynthesis.getVoices();
-    const bnVoice = voices.find(v => v.lang.startsWith('bn')) || voices.find(v => v.lang.includes('hi')) || null;
+    const bnVoice = voices.find(v => v.lang === 'bn-BD') 
+      || voices.find(v => v.lang === 'bn-IN') 
+      || voices.find(v => v.lang.startsWith('bn')) 
+      || null;
     if (bnVoice) utterance.voice = bnVoice;
 
     window.speechSynthesis.speak(utterance);
