@@ -33,6 +33,7 @@ import NewDayDialog from "@/components/dashboard/NewDayDialog";
 import NoDataDialog from "@/components/dashboard/NoDataDialog";
 import SoundAlertManager from "@/components/dashboard/SoundAlertManager";
 import MobileBottomNav from "@/components/dashboard/MobileBottomNav";
+import { usePresence } from "@/hooks/usePresence";
 
 const defaultDayData: DayData = {
   mood: '', water: 0, tasks: [], expenses: [],
@@ -65,6 +66,9 @@ const DashboardPage = () => {
   const [mobileSection, setMobileSection] = useState("home");
   const [isVerified, setIsVerified] = useState(false);
   const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockUntil?: string; reason?: string } | null>(null);
+
+  // Track online/offline presence
+  usePresence(userId);
 
   // Load user
   useEffect(() => {
@@ -223,6 +227,9 @@ const DashboardPage = () => {
   }, []);
 
   const handleLogout = async () => {
+    if (userId) {
+      await supabase.from("profiles").update({ is_online: false, last_seen: new Date().toISOString() }).eq("user_id", userId);
+    }
     await supabase.auth.signOut();
     navigate("/login");
   };
