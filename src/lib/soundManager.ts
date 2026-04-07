@@ -4,7 +4,6 @@ export interface SoundSettings {
   task: boolean;
   sleep: boolean;
   water: boolean;
-  voice: boolean;
 }
 
 const defaultSoundSettings: SoundSettings = {
@@ -13,7 +12,6 @@ const defaultSoundSettings: SoundSettings = {
   task: false,
   sleep: true,
   water: false,
-  voice: true,
 };
 
 const STORAGE_KEY = 'lifeos_sound_settings';
@@ -88,39 +86,5 @@ export function playNotificationSound(type: 'gentle' | 'alert' | 'reminder' = 'g
     setTimeout(() => ctx.close(), 2000);
   } catch (e) {
     console.warn('Sound playback failed:', e);
-  }
-}
-
-// Bengali Text-to-Speech using Web Speech API
-export function speakBengali(text: string): void {
-  try {
-    const settings = getSoundSettings();
-    if (!settings.voice) return;
-
-    if (!('speechSynthesis' in window)) {
-      console.warn('Speech synthesis not supported');
-      return;
-    }
-
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'bn-BD';
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    // Try to find a Bengali voice
-    const voices = window.speechSynthesis.getVoices();
-    const bnVoice = voices.find(v => v.lang === 'bn-BD') 
-      || voices.find(v => v.lang === 'bn-IN') 
-      || voices.find(v => v.lang.startsWith('bn')) 
-      || null;
-    if (bnVoice) utterance.voice = bnVoice;
-
-    window.speechSynthesis.speak(utterance);
-  } catch (e) {
-    console.warn('TTS failed:', e);
   }
 }

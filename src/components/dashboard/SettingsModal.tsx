@@ -8,6 +8,7 @@ interface Props {
   extraSettings: ExtraSettings;
   habitDefs: Habit[];
   onClose: () => void;
+  onSave?: () => void;
 }
 
 const soundFeatures = [
@@ -16,15 +17,15 @@ const soundFeatures = [
   { key: 'task' as const, label: '📅 কাজের সময়', desc: 'কাজের নির্ধারিত সময়ে সাউন্ড বাজবে' },
   { key: 'sleep' as const, label: '🛌 ঘুমের সময়', desc: 'ঘুমানোর সময় হলে সাউন্ড বাজবে' },
   { key: 'water' as const, label: '💧 পানি পান', desc: 'প্রতি ঘণ্টায় পানি পানের রিমাইন্ডার' },
-  { key: 'voice' as const, label: '🗣️ বাংলা ভয়েস', desc: 'সময় হলে বাংলায় বিস্তারিত বলে দিবে' },
 ];
 
-const SettingsModal = ({ namazTimes, extraSettings, habitDefs, onClose }: Props) => {
+const SettingsModal = ({ namazTimes, extraSettings, habitDefs, onClose, onSave }: Props) => {
   const [nt, setNt] = useState(namazTimes);
   const [es, setEs] = useState(extraSettings);
   const [habits, setHabits] = useState(habitDefs);
   const [newHabit, setNewHabit] = useState("");
   const [soundSettings, setSoundSettings] = useState<SoundSettings>(getSoundSettings());
+  const [saving, setSaving] = useState(false);
 
   const addHabit = () => {
     if (!newHabit.trim()) return;
@@ -40,13 +41,20 @@ const SettingsModal = ({ namazTimes, extraSettings, habitDefs, onClose }: Props)
     }
   };
 
-  const save = () => {
-    saveNamazTimes(nt);
-    saveExtraSettings(es);
-    saveHabitDefinitions(habits);
-    saveSoundSettings(soundSettings);
-    onClose();
-    window.location.reload();
+  const save = async () => {
+    setSaving(true);
+    try {
+      await saveNamazTimes(nt);
+      await saveExtraSettings(es);
+      await saveHabitDefinitions(habits);
+      saveSoundSettings(soundSettings);
+      onSave?.();
+      onClose();
+    } catch (e) {
+      console.error('Settings save failed:', e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -135,7 +143,9 @@ const SettingsModal = ({ namazTimes, extraSettings, habitDefs, onClose }: Props)
             </div>
           </section>
 
-          <button onClick={save} className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-black shadow-lg hover:opacity-90 transition active:scale-95">সংরক্ষণ করুন</button>
+          <button onClick={save} disabled={saving} className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-black shadow-lg hover:opacity-90 transition active:scale-95 disabled:opacity-50">
+            {saving ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ করুন'}
+          </button>
         </div>
       </div>
     </div>
