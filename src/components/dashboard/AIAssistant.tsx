@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { DayData, Goal } from "@/lib/types";
+import type { DayData, Goal, Medicine } from "@/lib/types";
 import { getNamazTimes, getExtraSettings } from "@/lib/dataStore";
 
 interface Props {
