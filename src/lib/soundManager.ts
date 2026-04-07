@@ -13,6 +13,7 @@ const defaultSoundSettings: SoundSettings = {
   task: false,
   sleep: true,
   water: false,
+  voice: true,
 };
 
 const STORAGE_KEY = 'lifeos_sound_settings';
