@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { loadDayData } from "@/lib/dataStore";
 import type { DayData } from "@/lib/types";
@@ -23,37 +23,41 @@ const WeeklyAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'mood' | 'productivity' | 'health'>('overview');
 
-  useState(() => {
-    const dates: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      dates.push(`${year}-${month}-${day}`);
-    }
+  useEffect(() => {
+    const loadWeekData = async () => {
+      const dates: string[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        dates.push(`${year}-${month}-${day}`);
+      }
 
-    const result: WeekDay[] = dates.map(dateStr => {
-      const d = new Date(dateStr);
-      const dayData = loadDayData(dateStr) as DayData | null;
-      const moodMap: Record<string, number> = { sad: 1, neutral: 2, happy: 3, amazing: 4 };
-      return {
-        date: dateStr,
-        label: DAYS_BN[d.getDay()],
-        mood: dayData ? (moodMap[dayData.mood] || 0) : 0,
-        water: dayData?.water || 0,
-        tasksDone: dayData?.tasks?.filter(t => t.done).length || 0,
-        tasksTotal: dayData?.tasks?.length || 0,
-        sleep: dayData?.sleepHours || 0,
-        expense: dayData?.expenses?.reduce((s, e) => s + e.amt, 0) || 0,
-        namazDone: dayData ? Object.values(dayData.namaz).filter(Boolean).length : 0,
-        habitsDone: dayData?.habits?.filter(h => h.checked).length || 0,
-      };
-    });
-    setWeekData(result);
-    setLoading(false);
-  });
+      const result: WeekDay[] = [];
+      for (const dateStr of dates) {
+        const d = new Date(dateStr);
+        const dayData = await loadDayData(dateStr);
+        const moodMap: Record<string, number> = { sad: 1, neutral: 2, happy: 3, amazing: 4 };
+        result.push({
+          date: dateStr,
+          label: DAYS_BN[d.getDay()],
+          mood: dayData ? (moodMap[dayData.mood] || 0) : 0,
+          water: dayData?.water || 0,
+          tasksDone: dayData?.tasks?.filter(t => t.done).length || 0,
+          tasksTotal: dayData?.tasks?.length || 0,
+          sleep: dayData?.sleepHours || 0,
+          expense: dayData?.expenses?.reduce((s, e) => s + e.amt, 0) || 0,
+          namazDone: dayData ? Object.values(dayData.namaz).filter(Boolean).length : 0,
+          habitsDone: dayData?.habits?.filter(h => h.checked).length || 0,
+        });
+      }
+      setWeekData(result);
+      setLoading(false);
+    };
+    loadWeekData();
+  }, []);
 
   const totalSleep = weekData.reduce((s, d) => s + d.sleep, 0);
   const avgSleep = weekData.length > 0 ? (totalSleep / weekData.length).toFixed(1) : '0';

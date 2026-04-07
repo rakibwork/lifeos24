@@ -23,7 +23,7 @@ export async function loadDayData(date: string): Promise<DayData | null> {
     .eq('user_id', userId)
     .eq('date', date)
     .single();
-  return data?.data as DayData | null;
+  return (data?.data as unknown as DayData) ?? null;
 }
 
 export async function saveDayData(date: string, dayData: DayData): Promise<void> {
@@ -111,7 +111,7 @@ export async function getMonthlyExpenses(): Promise<number> {
   let total = 0;
   if (data) {
     for (const row of data) {
-      const dayData = row.data as DayData;
+      const dayData = row.data as unknown as DayData;
       if (dayData?.expenses) {
         total += dayData.expenses.reduce((s, e) => s + e.amt, 0);
       }
