@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import type { DayData, NamazTimes, ExtraSettings } from "@/lib/types";
+import type { DayData, NamazTimes, ExtraSettings, Goal } from "@/lib/types";
+import { getGoals } from "@/lib/dataStore";
 
 interface Notification {
   id: string;
@@ -21,14 +22,43 @@ const prayerNames: Record<string, string> = {
 function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSettings: ExtraSettings): Notification[] {
   const notifs: Notification[] = [];
   const now = new Date();
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   // Missed namaz
   const prayerOrder = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
   for (const key of prayerOrder) {
     const time = namazTimes[key];
-    if (time && currentTime > time && !data.namaz[key]) {
-      notifs.push({ id: `namaz-${key}`, icon: '🕌', message: `${prayerNames[key]} নামাজ এখনো পড়া হয়নি`, type: 'warning' });
+    if (time) {
+      const [h, m] = time.split(':').map(Number);
+      const prayerMin = h * 60 + m;
+      if (currentMinutes > prayerMin && !data.namaz[key]) {
+        notifs.push({ id: `namaz-${key}`, icon: '🕌', message: `${prayerNames[key]} নামাজ এখনো পড়া হয়নি`, type: 'warning' });
+      }
+    }
+  }
+
+  // Task notifications - 20 min before & overdue
+  for (const task of data.tasks) {
+    if (task.done || !task.time) continue;
+    const [h, m] = task.time.split(':').map(Number);
+    const taskMin = h * 60 + m;
+    if (currentMinutes >= taskMin - 20 && currentMinutes < taskMin) {
+      notifs.push({ id: `task-soon-${task.id}`, icon: '⏰', message: `"${task.text}" কাজের সময় আসছে! দ্রুত শেষ করুন`, type: 'warning' });
+    } else if (currentMinutes >= taskMin) {
+      notifs.push({ id: `task-overdue-${task.id}`, icon: '⚠️', message: `"${task.text}" কাজ করা হয়নি, টাইম অনুযায়ী। কাজ শেষ করুন`, type: 'warning' });
+    }
+  }
+
+  // Goal notifications - 5 days before target
+  const goals: Goal[] = getGoals();
+  for (const goal of goals) {
+    if (!goal.target) continue;
+    const targetDate = new Date(goal.target);
+    const diffDays = Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 5 && diffDays >= 0) {
+      notifs.push({ id: `goal-${goal.id}`, icon: '🎯', message: `"${goal.title}" লক্ষ্যের আর ${diffDays} দিন বাকি!`, type: 'warning' });
+    } else if (diffDays < 0) {
+      notifs.push({ id: `goal-expired-${goal.id}`, icon: '🎯', message: `"${goal.title}" লক্ষ্যের সময় শেষ হয়ে গেছে!`, type: 'warning' });
     }
   }
 
@@ -42,12 +72,10 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
     notifs.push({ id: 'water', icon: '💧', message: `পানি পান মাত্র ${data.water}/৮ গ্লাস হয়েছে`, type: 'warning' });
   }
 
-  // Pending tasks
-  if (data.tasks.length > 0) {
-    const pending = data.tasks.filter(t => !t.done).length;
-    if (pending > 0) {
-      notifs.push({ id: 'tasks', icon: '📋', message: `${pending}টি কাজ বাকি আছে`, type: 'warning' });
-    }
+  // Pending tasks count
+  const pendingCount = data.tasks.filter(t => !t.done).length;
+  if (pendingCount > 0) {
+    notifs.push({ id: 'tasks-total', icon: '📋', message: `${pendingCount}টি কাজ বাকি আছে`, type: 'warning' });
   }
 
   // Habits unchecked
@@ -59,8 +87,11 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
   }
 
   // Sleep time check
-  if (extraSettings.sleepTime && currentTime > extraSettings.sleepTime && !data.sleepStart) {
-    notifs.push({ id: 'sleep', icon: '🛌', message: `ঘুমের সময় পার হয়ে গেছে (${extraSettings.sleepTime})`, type: 'warning' });
+  if (extraSettings.sleepTime) {
+    const [sh, sm] = extraSettings.sleepTime.split(':').map(Number);
+    if (currentMinutes > sh * 60 + sm && !data.sleepStart) {
+      notifs.push({ id: 'sleep', icon: '🛌', message: `ঘুমের সময় পার হয়ে গেছে (${extraSettings.sleepTime})`, type: 'warning' });
+    }
   }
 
   // No diary written
@@ -70,7 +101,10 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
 
   // Missed medicines
   if (data.medicineDoses) {
-    const missed = data.medicineDoses.filter(d => !d.taken && currentTime > d.time);
+    const missed = data.medicineDoses.filter(d => !d.taken).filter(d => {
+      const [h, m] = d.time.split(':').map(Number);
+      return currentMinutes > h * 60 + m;
+    });
     if (missed.length > 0) {
       notifs.push({ id: 'medicine', icon: '💊', message: `${missed.length}টি ওষুধ খাওয়া মিস হয়েছে!`, type: 'warning' });
     }
@@ -81,8 +115,10 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
 
 const NotificationBell = ({ data, namazTimes, extraSettings }: Props) => {
   const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
-  const notifications = generateNotifications(data, namazTimes, extraSettings);
+  const allNotifications = generateNotifications(data, namazTimes, extraSettings);
+  const notifications = allNotifications.filter(n => !dismissed.has(n.id));
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -91,6 +127,10 @@ const NotificationBell = ({ data, namazTimes, extraSettings }: Props) => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  const dismissNotif = (id: string) => {
+    setDismissed(prev => new Set(prev).add(id));
+  };
 
   return (
     <div className="relative" ref={ref}>
@@ -106,8 +146,11 @@ const NotificationBell = ({ data, namazTimes, extraSettings }: Props) => {
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-card border border-border rounded-2xl shadow-xl z-50 animate-fade-in-up">
-          <div className="px-4 py-3 border-b border-border">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h4 className="font-black text-sm text-foreground">🔔 নোটিফিকেশন</h4>
+            {notifications.length > 0 && (
+              <button onClick={() => setDismissed(new Set(allNotifications.map(n => n.id)))} className="text-[10px] font-bold text-primary hover:underline">সব মুছুন</button>
+            )}
           </div>
           {notifications.length === 0 ? (
             <div className="px-4 py-8 text-center text-muted-foreground text-sm">
@@ -118,7 +161,8 @@ const NotificationBell = ({ data, namazTimes, extraSettings }: Props) => {
               {notifications.map(n => (
                 <div key={n.id} className={`px-4 py-3 flex items-start gap-3 hover:bg-secondary/50 transition ${n.type === 'warning' ? 'bg-destructive/5' : ''}`}>
                   <span className="text-xl mt-0.5">{n.icon}</span>
-                  <p className="text-sm font-semibold text-foreground leading-snug">{n.message}</p>
+                  <p className="text-sm font-semibold text-foreground leading-snug flex-1">{n.message}</p>
+                  <button onClick={() => dismissNotif(n.id)} className="text-muted-foreground hover:text-destructive text-xs shrink-0 mt-0.5">✕</button>
                 </div>
               ))}
             </div>
