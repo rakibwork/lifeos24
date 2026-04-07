@@ -303,7 +303,7 @@ const DashboardPage = () => {
       {/* Live notification toasts */}
       <NotificationToast data={data} namazTimes={namazTimes} extraSettings={extraSettings} goals={goals} />
 
-      <main className="max-w-6xl mx-auto p-2 md:p-8 space-y-3 md:space-y-6">
+      <main className={`max-w-6xl mx-auto p-2 md:p-8 space-y-3 md:space-y-6 ${lockInfo?.locked ? 'pointer-events-none opacity-50 select-none' : ''}`}>
         {showInMobile("home") && (
           <>
             <AdminNotifBanner />
