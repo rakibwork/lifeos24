@@ -16,6 +16,7 @@ const soundFeatures = [
   { key: 'task' as const, label: '📅 কাজের সময়', desc: 'কাজের নির্ধারিত সময়ে সাউন্ড বাজবে' },
   { key: 'sleep' as const, label: '🛌 ঘুমের সময়', desc: 'ঘুমানোর সময় হলে সাউন্ড বাজবে' },
   { key: 'water' as const, label: '💧 পানি পান', desc: 'প্রতি ঘণ্টায় পানি পানের রিমাইন্ডার' },
+  { key: 'voice' as const, label: '🗣️ বাংলা ভয়েস', desc: 'সময় হলে বাংলায় বিস্তারিত বলে দিবে' },
 ];
 
 const SettingsModal = ({ namazTimes, extraSettings, habitDefs, onClose }: Props) => {

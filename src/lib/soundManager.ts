@@ -90,3 +90,34 @@ export function playNotificationSound(type: 'gentle' | 'alert' | 'reminder' = 'g
     console.warn('Sound playback failed:', e);
   }
 }
+
+// Bengali Text-to-Speech using Web Speech API
+export function speakBengali(text: string): void {
+  try {
+    const settings = getSoundSettings();
+    if (!settings.voice) return;
+
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'bn-BD';
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // Try to find a Bengali voice
+    const voices = window.speechSynthesis.getVoices();
+    const bnVoice = voices.find(v => v.lang.startsWith('bn')) || voices.find(v => v.lang.includes('hi')) || null;
+    if (bnVoice) utterance.voice = bnVoice;
+
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.warn('TTS failed:', e);
+  }
+}
