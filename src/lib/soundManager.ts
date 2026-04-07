@@ -4,6 +4,7 @@ export interface SoundSettings {
   task: boolean;
   sleep: boolean;
   water: boolean;
+  voice: boolean;
 }
 
 const defaultSoundSettings: SoundSettings = {
