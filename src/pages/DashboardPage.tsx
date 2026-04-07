@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, saveExtraSettings, getMonthlyExpenses } from "@/lib/dataStore";
 import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, UserProfile, AccountPerson, Medicine } from "@/lib/types";
+import { isAdmin } from "@/lib/adminStore";
 import NavBar from "@/components/dashboard/NavBar";
 import NotificationBell from "@/components/dashboard/NotificationBell";
+import AdminNotifBanner from "@/components/dashboard/AdminNotifBanner";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import MoodTracker from "@/components/dashboard/MoodTracker";
 import WaterTracker from "@/components/dashboard/WaterTracker";
@@ -25,6 +27,9 @@ import DailySummary from "@/components/dashboard/DailySummary";
 import WeeklyAnalytics from "@/components/dashboard/WeeklyAnalytics";
 import SettingsModal from "@/components/dashboard/SettingsModal";
 import ProfileModal from "@/components/dashboard/ProfileModal";
+import NewDayDialog from "@/components/dashboard/NewDayDialog";
+import NoDataDialog from "@/components/dashboard/NoDataDialog";
+import SoundAlertManager from "@/components/dashboard/SoundAlertManager";
 
 const defaultDayData: DayData = {
   mood: '', water: 0, tasks: [], expenses: [],
@@ -49,8 +54,11 @@ const DashboardPage = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [showNewDay, setShowNewDay] = useState(false);
+  const [noDataDate, setNoDataDate] = useState<string | null>(null);
 
-  // Load user name from profile
+  // Load user name from profile & check admin
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -58,15 +66,46 @@ const DashboardPage = () => {
         const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).single();
         if (profile?.full_name) setUserName(profile.full_name);
       }
+      const admin = await isAdmin();
+      setUserIsAdmin(admin);
     };
     loadUser();
-  }, [showProfile]); // reload when profile modal closes
+  }, [showProfile]);
+
+  // Midnight new day check
+  useEffect(() => {
+    const lastShown = localStorage.getItem('lifeos_newday_shown');
+    const today = getTodayStr();
+    if (lastShown !== today) {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() < 5) {
+        setShowNewDay(true);
+        localStorage.setItem('lifeos_newday_shown', today);
+      }
+    }
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const today = getTodayStr();
+      const lastShownNow = localStorage.getItem('lifeos_newday_shown');
+      if (lastShownNow !== today && now.getHours() === 0 && now.getMinutes() < 5) {
+        setShowNewDay(true);
+        localStorage.setItem('lifeos_newday_shown', today);
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const saved = loadDayData(selectedDate);
     if (saved) {
       setData(saved);
     } else {
+      const today = getTodayStr();
+      if (selectedDate !== today) {
+        setNoDataDate(selectedDate);
+      }
       const defs = getHabitDefinitions();
       const freshHabits = defs.map(h => ({ ...h, checked: false }));
       setData({ ...defaultDayData, habits: freshHabits });
@@ -149,13 +188,15 @@ const DashboardPage = () => {
         onSettings={() => setShowSettings(true)}
         onProfile={() => setShowProfile(true)}
         onLogout={handleLogout}
-        isAdmin={false}
+        isAdmin={userIsAdmin}
+        onAdmin={() => navigate("/admin")}
         notificationSlot={
           <NotificationBell data={data} namazTimes={namazTimes} extraSettings={extraSettings} />
         }
       />
 
       <main className="max-w-6xl mx-auto p-3 md:p-8 space-y-4 md:space-y-6">
+        <AdminNotifBanner />
         <AIAssistant data={data} goals={goals} />
         <SummaryCards data={data} accounts={accounts} monthlyExpense={monthlyExpense} extraSettings={extraSettings} />
 
@@ -195,6 +236,15 @@ const DashboardPage = () => {
           </div>
         </div>
       </main>
+
+      {/* Sound Alert Manager - invisible component */}
+      <SoundAlertManager data={data} namazTimes={namazTimes} extraSettings={extraSettings} />
+
+      {/* New Day Dialog */}
+      <NewDayDialog open={showNewDay} onClose={() => setShowNewDay(false)} userName={userName} />
+
+      {/* No Data Dialog */}
+      <NoDataDialog open={!!noDataDate} onOpenChange={(open) => !open && setNoDataDate(null)} date={noDataDate || getTodayStr()} />
 
       {showSettings && (
         <SettingsModal
