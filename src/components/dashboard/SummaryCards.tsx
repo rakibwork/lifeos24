@@ -47,7 +47,7 @@ const SummaryCards = ({ data, accounts, monthlyExpense, extraSettings }: Props) 
   return (
     <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
       {cards.map((c, i) => (
-        <div key={i} className={`rounded-2xl p-3 text-center border-b-4 shadow-sm relative ${c.color}`}>
+        <div key={i} className={`rounded-2xl p-3 text-center border-b-4 border-2 shadow-md relative ${c.color}`}>
           <div className="text-2xl mb-1">{c.icon}</div>
           <div className="text-[10px] font-bold text-muted-foreground">{c.label}</div>
           <div className="text-lg font-bold text-foreground">{c.value}</div>
