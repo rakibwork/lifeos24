@@ -9,10 +9,11 @@ interface Props {
   onProfile?: () => void;
   onLogout?: () => void;
   isAdmin?: boolean;
+  onAdmin?: () => void;
   notificationSlot?: ReactNode;
 }
 
-const NavBar = ({ userName, selectedDate, onDateChange, onSettings, onProfile, onLogout, isAdmin, notificationSlot }: Props) => {
+const NavBar = ({ userName, selectedDate, onDateChange, onSettings, onProfile, onLogout, isAdmin, onAdmin, notificationSlot }: Props) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingDate, setPendingDate] = useState(selectedDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
