@@ -67,6 +67,9 @@ const DashboardPage = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockUntil?: string; reason?: string } | null>(null);
 
+  // Track online/offline presence
+  usePresence(userId);
+
   // Load user
   useEffect(() => {
     const loadUser = async () => {
