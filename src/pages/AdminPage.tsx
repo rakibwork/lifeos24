@@ -335,7 +335,7 @@ const AdminPage = () => {
                         </button>
                       </>
                     )}
-                    <button onClick={() => { setActionModal({ type: 'verify', user: u }); }} className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 font-bold hover:bg-blue-500/20 transition flex items-center gap-1">
+                    <button onClick={() => { setActionModal({ type: 'verify', user: u }); setTimeout(() => handleAction(), 0); }} className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 font-bold hover:bg-blue-500/20 transition flex items-center gap-1">
                       <BadgeCheck className="w-3 h-3" /> {u.is_verified ? "আনভেরিফাই" : "ভেরিফাই"}
                     </button>
                     <button onClick={() => setActionModal({ type: 'notify', user: u })} className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition flex items-center gap-1">
