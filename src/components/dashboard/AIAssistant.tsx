@@ -105,14 +105,7 @@ const AIAssistant = ({ data, goals }: Props) => {
 
       // --- লক্ষ্য সংক্রান্ত ---
       if (goals.length > 0) {
-        const activeGoals = goals.filter(g => !g.done);
-        if (activeGoals.length > 0) {
-          msgs.push(`🎯 "${activeGoals[0].title}" — আজ এই লক্ষ্যে কী পদক্ষেপ নিয়েছেন? ছোট একটি পদক্ষেপও গুরুত্বপূর্ণ!`);
-        }
-        const doneGoals = goals.filter(g => g.done);
-        if (doneGoals.length > 0) {
-          msgs.push(`🏆 ${doneGoals.length}টি লক্ষ্য ইতোমধ্যে অর্জন করেছেন! নতুন লক্ষ্য ঠিক করুন।`);
-        }
+        msgs.push(`🎯 "${goals[0].title}" — আজ এই লক্ষ্যে কী পদক্ষেপ নিয়েছেন? ছোট একটি পদক্ষেপও গুরুত্বপূর্ণ!`);
       }
 
       // --- মেজাজ সংক্রান্ত ---
