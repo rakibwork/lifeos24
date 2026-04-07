@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, getSoundSettings, saveExtraSettings, getMonthlyExpenses, subscribeToUserData } from "@/lib/dataStore";
 import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, AccountPerson, Medicine } from "@/lib/types";
 import { defaultSoundSettings, type SoundSettings } from "@/lib/soundManager";
-import { isAdmin } from "@/lib/adminStore";
+import { isAdmin, getMyStatus } from "@/lib/adminStore";
 import NavBar from "@/components/dashboard/NavBar";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import NotificationToast from "@/components/dashboard/NotificationToast";
@@ -63,6 +63,8 @@ const DashboardPage = () => {
   const [showNewDay, setShowNewDay] = useState(false);
   const [noDataDate, setNoDataDate] = useState<string | null>(null);
   const [mobileSection, setMobileSection] = useState("home");
+  const [isVerified, setIsVerified] = useState(false);
+  const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockUntil?: string; reason?: string } | null>(null);
 
   // Load user
   useEffect(() => {
@@ -75,6 +77,22 @@ const DashboardPage = () => {
       }
       const admin = await isAdmin();
       setUserIsAdmin(admin);
+
+      // Check verified & lock status
+      if (user) {
+        const { data: pData } = await supabase.from("profiles").select("is_verified, status, lock_until, suspend_reason").eq("user_id", user.id).single();
+        if (pData) {
+          setIsVerified(!!(pData as any).is_verified);
+          const st = (pData as any).status;
+          const lu = (pData as any).lock_until;
+          const sr = (pData as any).suspend_reason;
+          if (st === 'locked' && lu && new Date(lu) > new Date()) {
+            setLockInfo({ locked: true, lockUntil: lu, reason: sr || undefined });
+          } else {
+            setLockInfo(null);
+          }
+        }
+      }
     };
     loadUser();
   }, [showProfile]);
