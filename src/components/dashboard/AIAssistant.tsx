@@ -162,7 +162,9 @@ const AIAssistant = ({ data, goals }: Props) => {
       }
 
       // --- ডায়েরি সংক্রান্ত ---
-      if (!data.diary && hour >= 20) {
+      // ডায়েরি - notebooks ব্যবহার করে চেক
+      const hasWritten = data.notebooks && data.notebooks.some(n => n.content && n.content.trim().length > 0);
+      if (!hasWritten && hour >= 20) {
         msgs.push(`📖 আজ ডায়েরি লেখেননি! ঘুমানোর আগে দিনের অভিজ্ঞতা লিখে রাখুন, ভবিষ্যতে কাজে আসবে।`);
       }
 
