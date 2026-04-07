@@ -41,10 +41,13 @@ const NavBar = ({ userName, selectedDate, onDateChange, onSettings, onProfile, o
     <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border p-3 md:p-4 shadow-sm">
       <div className="max-w-6xl mx-auto flex justify-between items-center gap-2">
         {/* Logo */}
-        <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2 shrink-0 cursor-pointer hover:opacity-80 transition"
+        >
           <div className="w-9 h-9 md:w-10 md:h-10 bg-primary rounded-xl md:rounded-2xl flex items-center justify-center text-primary-foreground shadow-lg text-base md:text-lg">⚡</div>
-          <h1 className="text-lg md:text-2xl font-black tracking-tight text-foreground hidden sm:block">Life <span className="text-primary">OS</span></h1>
-        </div>
+          <h1 className="text-lg md:text-2xl font-black tracking-tight text-foreground">Life <span className="text-primary">OS</span></h1>
+        </button>
 
         {/* Right section */}
         <div className="flex items-center gap-1.5 md:gap-2">
