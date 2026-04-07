@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, UserProfile, AccountPerson } from './types';
+import { defaultSoundSettings, type SoundSettings } from './soundManager';
 
 export function getTodayStr(): string {
   const d = new Date();
@@ -92,6 +93,13 @@ export async function getExtraSettings(): Promise<ExtraSettings> {
   return loadAppData<ExtraSettings>('extraSettings', { dailyLimit: 500, monthlyLimit: 15000, sleepTime: "22:00" });
 }
 export async function saveExtraSettings(s: ExtraSettings): Promise<void> { return saveAppData('extraSettings', s); }
+
+// Sound settings
+export async function getSoundSettings(): Promise<SoundSettings> {
+  const saved = await loadAppData<Partial<SoundSettings>>('soundSettings', {});
+  return { ...defaultSoundSettings, ...saved };
+}
+export async function saveSoundSettings(s: SoundSettings): Promise<void> { return saveAppData('soundSettings', s); }
 
 // Monthly expenses
 export async function getMonthlyExpenses(): Promise<number> {

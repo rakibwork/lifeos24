@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, saveExtraSettings, getMonthlyExpenses, subscribeToUserData } from "@/lib/dataStore";
+import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, getSoundSettings, saveExtraSettings, getMonthlyExpenses, subscribeToUserData } from "@/lib/dataStore";
 import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, AccountPerson, Medicine } from "@/lib/types";
+import { defaultSoundSettings, type SoundSettings } from "@/lib/soundManager";
 import { isAdmin } from "@/lib/adminStore";
 import NavBar from "@/components/dashboard/NavBar";
 import NotificationBell from "@/components/dashboard/NotificationBell";
@@ -54,6 +55,7 @@ const DashboardPage = () => {
   const [monthlyExpense, setMonthlyExpense] = useState(0);
   const [namazTimes, setNamazTimes] = useState<NamazTimes>({ fajr: "05:30", dhuhr: "13:30", asr: "16:45", maghrib: "18:20", isha: "20:00" });
   const [extraSettings, setExtraSettings] = useState<ExtraSettings>({ dailyLimit: 500, monthlyLimit: 15000, sleepTime: "22:00" });
+  const [soundSettings, setSoundSettings] = useState<SoundSettings>(defaultSoundSettings);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -120,9 +122,9 @@ const DashboardPage = () => {
   // Load all app data on mount
   useEffect(() => {
     const loadAll = async () => {
-      const [g, pn, acc, qn, hd, nt, es, me] = await Promise.all([
+      const [g, pn, acc, qn, hd, nt, es, ss, me] = await Promise.all([
         getGoals(), getPermNotes(), getAccounts(), getQuickNotes(),
-        getHabitDefinitions(), getNamazTimes(), getExtraSettings(), getMonthlyExpenses()
+        getHabitDefinitions(), getNamazTimes(), getExtraSettings(), getSoundSettings(), getMonthlyExpenses()
       ]);
       setGoalsState(g);
       setPermNotesState(pn);
@@ -131,6 +133,7 @@ const DashboardPage = () => {
       setHabitDefs(hd);
       setNamazTimes(nt);
       setExtraSettings(es);
+      setSoundSettings(ss);
       setMonthlyExpense(me);
       setLoading(false);
     };
@@ -165,6 +168,7 @@ const DashboardPage = () => {
           case 'habitDefs': setHabitDefs(value as Habit[]); break;
           case 'namazTimes': setNamazTimes(value as NamazTimes); break;
           case 'extraSettings': setExtraSettings(value as ExtraSettings); break;
+          case 'soundSettings': setSoundSettings({ ...defaultSoundSettings, ...((value as Partial<SoundSettings>) || {}) }); break;
         }
       }
     );
@@ -205,11 +209,17 @@ const DashboardPage = () => {
     navigate("/login");
   };
 
-  const handleSettingsSave = useCallback(async () => {
-    const [nt, es, hd] = await Promise.all([getNamazTimes(), getExtraSettings(), getHabitDefinitions()]);
+  const handleSettingsSave = useCallback((settings: {
+    namazTimes: NamazTimes;
+    extraSettings: ExtraSettings;
+    habitDefs: Habit[];
+    soundSettings: SoundSettings;
+  }) => {
+    const { namazTimes: nt, extraSettings: es, habitDefs: hd, soundSettings: ss } = settings;
     setNamazTimes(nt);
     setExtraSettings(es);
     setHabitDefs(hd);
+    setSoundSettings(ss);
   }, []);
 
   const progress = (() => {
@@ -346,7 +356,7 @@ const DashboardPage = () => {
       </main>
 
       <MobileBottomNav activeSection={mobileSection} onSectionChange={setMobileSection} />
-      <SoundAlertManager data={data} namazTimes={namazTimes} extraSettings={extraSettings} />
+      <SoundAlertManager data={data} namazTimes={namazTimes} extraSettings={extraSettings} soundSettings={soundSettings} />
       <NewDayDialog open={showNewDay} onClose={() => setShowNewDay(false)} userName={userName} />
       <NoDataDialog open={!!noDataDate} onOpenChange={(open) => !open && setNoDataDate(null)} date={noDataDate || getTodayStr()} />
 
@@ -355,6 +365,7 @@ const DashboardPage = () => {
           namazTimes={namazTimes}
           extraSettings={extraSettings}
           habitDefs={habitDefs}
+          soundSettings={soundSettings}
           onClose={() => setShowSettings(false)}
           onSave={handleSettingsSave}
         />

@@ -1,14 +1,20 @@
 import { useState } from "react";
 import type { Habit, NamazTimes, ExtraSettings } from "@/lib/types";
-import { saveNamazTimes, saveExtraSettings, saveHabitDefinitions } from "@/lib/dataStore";
-import { getSoundSettings, saveSoundSettings, playNotificationSound, type SoundSettings } from "@/lib/soundManager";
+import { saveNamazTimes, saveExtraSettings, saveHabitDefinitions, saveSoundSettings } from "@/lib/dataStore";
+import { playNotificationSound, type SoundSettings } from "@/lib/soundManager";
 
 interface Props {
   namazTimes: NamazTimes;
   extraSettings: ExtraSettings;
   habitDefs: Habit[];
+  soundSettings: SoundSettings;
   onClose: () => void;
-  onSave?: () => void;
+  onSave?: (settings: {
+    namazTimes: NamazTimes;
+    extraSettings: ExtraSettings;
+    habitDefs: Habit[];
+    soundSettings: SoundSettings;
+  }) => void;
 }
 
 const soundFeatures = [
@@ -19,12 +25,12 @@ const soundFeatures = [
   { key: 'water' as const, label: '💧 পানি পান', desc: 'প্রতি ঘণ্টায় পানি পানের রিমাইন্ডার' },
 ];
 
-const SettingsModal = ({ namazTimes, extraSettings, habitDefs, onClose, onSave }: Props) => {
+const SettingsModal = ({ namazTimes, extraSettings, habitDefs, soundSettings: initialSoundSettings, onClose, onSave }: Props) => {
   const [nt, setNt] = useState(namazTimes);
   const [es, setEs] = useState(extraSettings);
   const [habits, setHabits] = useState(habitDefs);
   const [newHabit, setNewHabit] = useState("");
-  const [soundSettings, setSoundSettings] = useState<SoundSettings>(getSoundSettings());
+  const [soundSettings, setSoundSettings] = useState<SoundSettings>(initialSoundSettings);
   const [saving, setSaving] = useState(false);
 
   const addHabit = () => {
@@ -44,11 +50,13 @@ const SettingsModal = ({ namazTimes, extraSettings, habitDefs, onClose, onSave }
   const save = async () => {
     setSaving(true);
     try {
-      await saveNamazTimes(nt);
-      await saveExtraSettings(es);
-      await saveHabitDefinitions(habits);
-      saveSoundSettings(soundSettings);
-      onSave?.();
+      await Promise.all([
+        saveNamazTimes(nt),
+        saveExtraSettings(es),
+        saveHabitDefinitions(habits),
+        saveSoundSettings(soundSettings),
+      ]);
+      onSave?.({ namazTimes: nt, extraSettings: es, habitDefs: habits, soundSettings });
       onClose();
     } catch (e) {
       console.error('Settings save failed:', e);
