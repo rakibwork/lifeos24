@@ -335,7 +335,15 @@ const AdminPage = () => {
                         </button>
                       </>
                     )}
-                    <button onClick={() => { setActionModal({ type: 'verify', user: u }); setTimeout(() => handleAction(), 0); }} className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 font-bold hover:bg-blue-500/20 transition flex items-center gap-1">
+                    <button onClick={async () => {
+                      setActionLoading(true);
+                      try {
+                        await toggleVerified(u.user_id, !u.is_verified);
+                        toast.success(u.is_verified ? "ভেরিফিকেশন সরানো হয়েছে" : "ভেরিফাই করা হয়েছে");
+                        await refresh();
+                      } catch (e: any) { toast.error(e.message || "ভুল হয়েছে"); }
+                      setActionLoading(false);
+                    }} disabled={actionLoading} className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 font-bold hover:bg-blue-500/20 transition flex items-center gap-1 disabled:opacity-50">
                       <BadgeCheck className="w-3 h-3" /> {u.is_verified ? "আনভেরিফাই" : "ভেরিফাই"}
                     </button>
                     <button onClick={() => setActionModal({ type: 'notify', user: u })} className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition flex items-center gap-1">
