@@ -43,6 +43,24 @@ const AIAssistant = ({ data, goals }: Props) => {
       if (goals.length > 0) msgs.push(`🎯 "${goals[0].title}" লক্ষ্যে আজ কোন পদক্ষেপ নিয়েছেন?`);
       if (data.mood === 'sad') msgs.push(`💛 মন খারাপ? একটু বাইরে ঘুরে আসুন বা পছন্দের কিছু করুন।`);
       if (data.mood === 'amazing') msgs.push(`🔥 মাশাআল্লাহ! আপনি দারুণ করছেন, এভাবে চালিয়ে যান!`);
+
+      // Medicine missed alerts
+      if (data.medicineDoses) {
+        const currentMin = now.getHours() * 60 + now.getMinutes();
+        const missedMeds = data.medicineDoses.filter(d => {
+          if (d.taken) return false;
+          const [h, m] = d.time.split(':').map(Number);
+          return currentMin > h * 60 + m;
+        });
+        if (missedMeds.length > 0) {
+          msgs.push(`💊 ${missedMeds.length}টি ওষুধ খাওয়া মিস হয়েছে! এখনই খেয়ে নিন।`);
+        }
+        const medicines: Medicine[] = settings.medicines || [];
+        const lowPills = medicines.filter(m => m.remainingPills <= 3 && m.remainingPills > 0);
+        if (lowPills.length > 0) {
+          msgs.push(`💊 "${lowPills[0].name}" ওষুধ প্রায় শেষ! মাত্র ${lowPills[0].remainingPills}টি বাকি।`);
+        }
+      }
       if (now.getHours() >= 22) msgs.push(`🌙 ঘুমানোর সময় হয়ে গেছে! মোবাইল রেখে ঘুমিয়ে পড়ুন।`);
       if (msgs.length === 0) msgs.push(`👍 আপনি দারুণভাবে সবকিছু ম্যানেজ করছেন! এভাবে চালিয়ে যান।`);
       setInsights(msgs);
