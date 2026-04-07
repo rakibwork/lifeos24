@@ -275,8 +275,6 @@ const DashboardPage = () => {
             </div>
             <div className="md:hidden space-y-3">
               <ProgressCard progress={progress} />
-              <NamazTracker namaz={data.namaz} onNamazChange={namaz => updateData({ namaz })} />
-              <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
             </div>
           </>
         )}
@@ -313,10 +311,20 @@ const DashboardPage = () => {
         <div className="md:hidden space-y-3">
           {showInMobile("tasks") && (
             <>
-              <ExpenseCard expenses={data.expenses} onExpensesChange={expenses => updateData({ expenses })} />
               <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
+              <ExpenseCard expenses={data.expenses} onExpensesChange={expenses => updateData({ expenses })} />
               <DiaryCard notebooks={data.notebooks} activeNoteId={data.activeNoteId} onUpdate={(notebooks, activeNoteId) => updateData({ notebooks, activeNoteId })} />
               <QuickNoteCard notes={quickNotes} onNotesChange={updateQuickNotes} />
+              <HabitCard habits={data.habits} onHabitsChange={habits => updateData({ habits })} />
+              <NamazTracker namaz={data.namaz} onNamazChange={namaz => updateData({ namaz })} />
+            </>
+          )}
+
+          {showInMobile("notes") && (
+            <>
+              <GoalCard goals={goals} onGoalsChange={updateGoals} />
+              <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
+              <PermNoteCard notes={permNotes} onNotesChange={updatePermNotes} />
             </>
           )}
 
@@ -338,17 +346,9 @@ const DashboardPage = () => {
             </>
           )}
 
-          {showInMobile("notes") && (
-            <>
-              <GoalCard goals={goals} onGoalsChange={updateGoals} />
-              <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
-              <PermNoteCard notes={permNotes} onNotesChange={updatePermNotes} />
-              <HabitCard habits={data.habits} onHabitsChange={habits => updateData({ habits })} />
-            </>
-          )}
-
           {showInMobile("more") && (
             <>
+              <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
               <WeeklyAnalytics />
             </>
           )}
