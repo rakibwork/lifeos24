@@ -239,7 +239,7 @@ const WeatherCard = () => {
             </div>
             <div>
               <h3 className="font-bold text-sm text-foreground">আবহাওয়া</h3>
-              <p className="text-[10px] text-muted-foreground">{weatherInfo?.label || "লোড হচ্ছে..."}</p>
+              <p className="text-xs text-muted-foreground">{weatherInfo?.label || "লোড হচ্ছে..."}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -262,10 +262,10 @@ const WeatherCard = () => {
         </div>
 
         {/* Location name */}
-        <div className="flex items-center gap-1 text-[11px] text-muted-foreground ml-10">
-          <MapPin className="w-3 h-3" />
+        <div className="flex items-center gap-1 text-xs text-muted-foreground ml-10">
+          <MapPin className="w-3.5 h-3.5" />
           <span>{locationName}</span>
-          {lastUpdate && <span className="ml-auto text-[10px] opacity-70">আপডেট: {lastUpdate}</span>}
+          {lastUpdate && <span className="ml-auto text-xs opacity-70">আপডেট: {lastUpdate}</span>}
         </div>
       </div>
 
@@ -316,15 +316,15 @@ const WeatherCard = () => {
                 <span className={`text-4xl font-black tracking-tight ${getTempColor(weather.temperature)}`}>
                   {Math.round(weather.temperature)}°
                 </span>
-                <span className="text-xs text-muted-foreground mb-1.5">সে.</span>
+                <span className="text-sm text-muted-foreground mb-1.5">সে.</span>
               </div>
               <div className="text-right space-y-0.5">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground justify-end">
-                  <Thermometer className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-sm text-muted-foreground justify-end">
+                  <Thermometer className="w-3.5 h-3.5" />
                   <span>অনুভূত {Math.round(weather.feelsLike)}°</span>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground justify-end">
-                  <Droplets className="w-3 h-3" />
+                <div className="flex items-center gap-1 text-sm text-muted-foreground justify-end">
+                  <Droplets className="w-3.5 h-3.5" />
                   <span>আর্দ্রতা {weather.humidity}%</span>
                 </div>
               </div>
@@ -332,30 +332,30 @@ const WeatherCard = () => {
 
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-muted/40 rounded-lg p-2 text-center">
-                <Wind className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" />
-                <p className="text-xs font-semibold">{Math.round(weather.windSpeed)} km/h</p>
-                <p className="text-[10px] text-muted-foreground">বাতাস</p>
+              <div className="bg-muted/40 rounded-lg p-2.5 text-center">
+                <Wind className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-sm font-semibold">{Math.round(weather.windSpeed)} km/h</p>
+                <p className="text-xs text-muted-foreground">বাতাস</p>
               </div>
-              <div className="bg-muted/40 rounded-lg p-2 text-center">
-                <CloudRain className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" />
-                <p className="text-xs font-semibold">{weather.precipitationProbability}%</p>
-                <p className="text-[10px] text-muted-foreground">বৃষ্টি</p>
+              <div className="bg-muted/40 rounded-lg p-2.5 text-center">
+                <CloudRain className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-sm font-semibold">{weather.precipitationProbability}%</p>
+                <p className="text-xs text-muted-foreground">বৃষ্টি</p>
               </div>
-              <div className="bg-muted/40 rounded-lg p-2 text-center">
-                <Sun className="w-3.5 h-3.5 mx-auto mb-0.5 text-muted-foreground" />
-                <p className="text-xs font-semibold">{weather.uvIndex.toFixed(1)}</p>
-                <p className="text-[10px] text-muted-foreground">UV সূচক</p>
+              <div className="bg-muted/40 rounded-lg p-2.5 text-center">
+                <Sun className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-sm font-semibold">{weather.uvIndex.toFixed(1)}</p>
+                <p className="text-xs text-muted-foreground">UV সূচক</p>
               </div>
             </div>
 
             {/* Advice */}
             {advice.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">পরামর্শ</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">পরামর্শ</p>
                 <div className="space-y-1">
                   {advice.map((tip, i) => (
-                    <div key={i} className="bg-muted/30 rounded-md px-2.5 py-1.5 text-xs leading-relaxed">
+                    <div key={i} className="bg-muted/30 rounded-md px-3 py-2 text-sm leading-relaxed">
                       {tip}
                     </div>
                   ))}
