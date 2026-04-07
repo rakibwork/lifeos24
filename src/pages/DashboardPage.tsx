@@ -227,6 +227,9 @@ const DashboardPage = () => {
   }, []);
 
   const handleLogout = async () => {
+    if (userId) {
+      await supabase.from("profiles").update({ is_online: false, last_seen: new Date().toISOString() }).eq("user_id", userId);
+    }
     await supabase.auth.signOut();
     navigate("/login");
   };
