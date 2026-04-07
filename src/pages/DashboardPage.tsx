@@ -33,6 +33,7 @@ import NewDayDialog from "@/components/dashboard/NewDayDialog";
 import NoDataDialog from "@/components/dashboard/NoDataDialog";
 import SoundAlertManager from "@/components/dashboard/SoundAlertManager";
 import MobileBottomNav from "@/components/dashboard/MobileBottomNav";
+import { usePresence } from "@/hooks/usePresence";
 
 const defaultDayData: DayData = {
   mood: '', water: 0, tasks: [], expenses: [],
