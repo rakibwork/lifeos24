@@ -108,7 +108,14 @@
     @apply bg-background text-foreground;
     font-family: 'Hind Siliguri', sans-serif;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: contain;
   }
+
+  /* Safe area for notched phones */
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 }
 
 @layer utilities {

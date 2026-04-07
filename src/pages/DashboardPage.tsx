@@ -30,6 +30,7 @@ import ProfileModal from "@/components/dashboard/ProfileModal";
 import NewDayDialog from "@/components/dashboard/NewDayDialog";
 import NoDataDialog from "@/components/dashboard/NoDataDialog";
 import SoundAlertManager from "@/components/dashboard/SoundAlertManager";
+import MobileBottomNav from "@/components/dashboard/MobileBottomNav";
 
 const defaultDayData: DayData = {
   mood: '', water: 0, tasks: [], expenses: [],
@@ -57,8 +58,8 @@ const DashboardPage = () => {
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [showNewDay, setShowNewDay] = useState(false);
   const [noDataDate, setNoDataDate] = useState<string | null>(null);
+  const [mobileSection, setMobileSection] = useState("home");
 
-  // Load user name from profile & check admin
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -72,7 +73,6 @@ const DashboardPage = () => {
     loadUser();
   }, [showProfile]);
 
-  // Midnight new day check
   useEffect(() => {
     const lastShown = localStorage.getItem('lifeos_newday_shown');
     const today = getTodayStr();
@@ -83,7 +83,6 @@ const DashboardPage = () => {
         localStorage.setItem('lifeos_newday_shown', today);
       }
     }
-
     const interval = setInterval(() => {
       const now = new Date();
       const today = getTodayStr();
@@ -93,7 +92,6 @@ const DashboardPage = () => {
         localStorage.setItem('lifeos_newday_shown', today);
       }
     }, 30000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -103,9 +101,7 @@ const DashboardPage = () => {
       setData(saved);
     } else {
       const today = getTodayStr();
-      if (selectedDate !== today) {
-        setNoDataDate(selectedDate);
-      }
+      if (selectedDate !== today) setNoDataDate(selectedDate);
       const defs = getHabitDefinitions();
       const freshHabits = defs.map(h => ({ ...h, checked: false }));
       setData({ ...defaultDayData, habits: freshHabits });
@@ -170,17 +166,21 @@ const DashboardPage = () => {
     return Math.min(100, Math.round(namazP + waterP + workP));
   })();
 
+  // Mobile section visibility
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const showInMobile = (section: string) => !isMobile || mobileSection === section;
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <div className="text-4xl mb-3 animate-pulse">🌿</div>
-        <div className="font-bold text-muted-foreground">ড্যাশবোর্ড লোড হচ্ছে...</div>
+        <div className="text-4xl mb-3 animate-pulse">⚡</div>
+        <div className="font-bold text-muted-foreground">লোড হচ্ছে...</div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <NavBar
         userName={userName}
         selectedDate={selectedDate}
@@ -195,18 +195,23 @@ const DashboardPage = () => {
         }
       />
 
-      <main className="max-w-6xl mx-auto p-3 md:p-8 space-y-4 md:space-y-6">
-        <AdminNotifBanner />
-        <AIAssistant data={data} goals={goals} />
-        <SummaryCards data={data} accounts={accounts} monthlyExpense={monthlyExpense} extraSettings={extraSettings} />
+      <main className="max-w-6xl mx-auto p-2 md:p-8 space-y-3 md:space-y-6">
+        {/* Home section - always visible on desktop, conditional on mobile */}
+        {showInMobile("home") && (
+          <>
+            <AdminNotifBanner />
+            <AIAssistant data={data} goals={goals} />
+            <SummaryCards data={data} accounts={accounts} monthlyExpense={monthlyExpense} extraSettings={extraSettings} />
+            <div className="grid grid-cols-3 gap-2 md:gap-4">
+              <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
+              <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
+              <ProgressCard progress={progress} />
+            </div>
+          </>
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-          <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
-          <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
-          <ProgressCard progress={progress} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+        {/* Desktop: full layout, Mobile: section-based */}
+        <div className="hidden md:grid md:grid-cols-12 gap-4 md:gap-6">
           <div className="md:col-span-8 space-y-4 md:space-y-6">
             <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
             <GoalCard goals={goals} onGoalsChange={updateGoals} />
@@ -216,7 +221,6 @@ const DashboardPage = () => {
             <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
             <WeeklyAnalytics />
           </div>
-
           <div className="md:col-span-4 space-y-4 md:space-y-6">
             <NamazTracker namaz={data.namaz} onNamazChange={namaz => updateData({ namaz })} />
             <MedicineCard
@@ -235,15 +239,56 @@ const DashboardPage = () => {
             <SleepTracker sleepStart={data.sleepStart} sleepEnd={data.sleepEnd} sleepHours={data.sleepHours} onUpdate={(sleepStart, sleepEnd, sleepHours) => updateData({ sleepStart, sleepEnd, sleepHours })} />
           </div>
         </div>
+
+        {/* Mobile sections */}
+        <div className="md:hidden space-y-3">
+          {showInMobile("tasks") && (
+            <>
+              <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
+              <GoalCard goals={goals} onGoalsChange={updateGoals} />
+              <ExpenseCard expenses={data.expenses} onExpensesChange={expenses => updateData({ expenses })} />
+              <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
+            </>
+          )}
+
+          {showInMobile("health") && (
+            <>
+              <NamazTracker namaz={data.namaz} onNamazChange={namaz => updateData({ namaz })} />
+              <MedicineCard
+                medicines={extraSettings.medicines || []}
+                doses={data.medicineDoses || []}
+                onMedicinesChange={(medicines: Medicine[]) => {
+                  const newSettings = { ...extraSettings, medicines };
+                  setExtraSettings(newSettings);
+                  saveExtraSettings(newSettings);
+                }}
+                onDosesChange={medicineDoses => updateData({ medicineDoses })}
+              />
+              <HabitCard habits={data.habits} onHabitsChange={habits => updateData({ habits })} />
+              <SleepTracker sleepStart={data.sleepStart} sleepEnd={data.sleepEnd} sleepHours={data.sleepHours} onUpdate={(sleepStart, sleepEnd, sleepHours) => updateData({ sleepStart, sleepEnd, sleepHours })} />
+            </>
+          )}
+
+          {showInMobile("notes") && (
+            <>
+              <DiaryCard notebooks={data.notebooks} activeNoteId={data.activeNoteId} onUpdate={(notebooks, activeNoteId) => updateData({ notebooks, activeNoteId })} />
+              <QuickNoteCard notes={quickNotes} onNotesChange={updateQuickNotes} />
+              <PermNoteCard notes={permNotes} onNotesChange={updatePermNotes} />
+            </>
+          )}
+
+          {showInMobile("more") && (
+            <>
+              <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
+              <WeeklyAnalytics />
+            </>
+          )}
+        </div>
       </main>
 
-      {/* Sound Alert Manager - invisible component */}
+      <MobileBottomNav activeSection={mobileSection} onSectionChange={setMobileSection} />
       <SoundAlertManager data={data} namazTimes={namazTimes} extraSettings={extraSettings} />
-
-      {/* New Day Dialog */}
       <NewDayDialog open={showNewDay} onClose={() => setShowNewDay(false)} userName={userName} />
-
-      {/* No Data Dialog */}
       <NoDataDialog open={!!noDataDate} onOpenChange={(open) => !open && setNoDataDate(null)} date={noDataDate || getTodayStr()} />
 
       {showSettings && (
