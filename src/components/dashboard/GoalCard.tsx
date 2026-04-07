@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Goal } from "@/lib/types";
+import DeleteConfirmDialog from "./DeleteConfirmDialog";
 
 interface Props {
   goals: Goal[];
@@ -9,6 +10,7 @@ interface Props {
 const GoalCard = ({ goals, onGoalsChange }: Props) => {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -33,22 +35,37 @@ const GoalCard = ({ goals, onGoalsChange }: Props) => {
   };
 
   return (
-    <div className="bg-card rounded-2xl p-4 border-2 border-t-4 border-life-emerald shadow-sm">
-      <h3 className="text-sm font-bold mb-3 text-life-emerald">🎯 আমার লক্ষ্য</h3>
-      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="লক্ষ্যের নাম..." className="w-full p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground mb-2" />
-      <input value={date} onChange={e => setDate(e.target.value)} placeholder="যেমন: 2025-12-31 23:59" className="w-full p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground mb-2" onFocus={e => { e.target.type = 'datetime-local'; }} onBlur={e => { if (!e.target.value) e.target.type = 'text'; }} />
-      <button onClick={addGoal} className="w-full bg-life-emerald text-primary-foreground py-3 rounded-xl font-bold text-sm hover:opacity-90 transition mb-3">সেট</button>
-      <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
-        {goals.map(g => (
-          <div key={g.id} className="p-3 rounded-xl bg-life-emerald-light border border-life-emerald/20">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-sm">{g.title}</span>
-              <button onClick={() => onGoalsChange(goals.filter(x => x.id !== g.id))} className="text-destructive/40 hover:text-destructive text-xs">🗑️</button>
-            </div>
-            <div className="text-[11px] text-muted-foreground mt-1 font-bold">{getTimeLeft(g.target)}</div>
-          </div>
-        ))}
+    <div className="bg-card rounded-2xl p-5 border border-border border-t-4 border-t-primary shadow-sm">
+      <h3 className="font-bold text-lg text-primary mb-4">🎯 আমার লক্ষ্য</h3>
+      <div className="flex flex-col gap-2 mb-4">
+        <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="লক্ষ্যের নাম..." className="w-full p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground" />
+        <div className="relative">
+          <input type="text" value={date} onChange={e => setDate(e.target.value)} placeholder="যেমন: 2025-12-31 23:59" className="w-full p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground" onFocus={e => { e.target.type = 'datetime-local'; }} onBlur={e => { if (!e.target.value) e.target.type = 'text'; }} />
+        </div>
+        <button onClick={addGoal} className="w-full bg-primary text-primary-foreground px-5 py-3 rounded-xl font-bold hover:opacity-90 transition active:scale-95">সেট</button>
       </div>
+      <div className="space-y-3">
+        {goals.map(g => {
+          const timeLeft = getTimeLeft(g.target);
+          const isExpired = timeLeft === "সময় শেষ!";
+          return (
+            <div key={g.id} className="flex justify-between items-center p-4 bg-secondary rounded-2xl border border-border">
+              <div className="min-w-0 flex-1">
+                <h4 className="font-bold text-sm text-foreground">{g.title}</h4>
+                <p className={`text-xs font-bold mt-1 tabular-nums ${isExpired ? 'text-destructive' : 'text-primary'}`}>{timeLeft}</p>
+              </div>
+              <button onClick={() => setDeleteId(g.id)} className="text-destructive/40 hover:text-destructive transition text-xs ml-2">🗑️</button>
+            </div>
+          );
+        })}
+      </div>
+      <DeleteConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => { if (deleteId !== null) { onGoalsChange(goals.filter(x => x.id !== deleteId)); setDeleteId(null); } }}
+        title="লক্ষ্যটি ডিলেট করবেন?"
+        description="এই লক্ষ্যটি স্থায়ীভাবে মুছে ফেলা হবে।"
+      />
     </div>
   );
 };
