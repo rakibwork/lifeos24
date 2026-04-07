@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      admin_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -27,10 +84,16 @@ export type Database = {
           full_name: string
           hobbies: string | null
           id: string
+          is_online: boolean | null
+          is_verified: boolean | null
+          last_seen: string | null
+          lock_until: string | null
           mobile: string | null
           mobile_private: boolean | null
           profession: string | null
           social_link: string | null
+          status: string | null
+          suspend_reason: string | null
           updated_at: string
           user_id: string
           website: string | null
@@ -47,10 +110,16 @@ export type Database = {
           full_name?: string
           hobbies?: string | null
           id?: string
+          is_online?: boolean | null
+          is_verified?: boolean | null
+          last_seen?: string | null
+          lock_until?: string | null
           mobile?: string | null
           mobile_private?: boolean | null
           profession?: string | null
           social_link?: string | null
+          status?: string | null
+          suspend_reason?: string | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -67,13 +136,37 @@ export type Database = {
           full_name?: string
           hobbies?: string | null
           id?: string
+          is_online?: boolean | null
+          is_verified?: boolean | null
+          last_seen?: string | null
+          lock_until?: string | null
           mobile?: string | null
           mobile_private?: boolean | null
           profession?: string | null
           social_link?: string | null
+          status?: string | null
+          suspend_reason?: string | null
           updated_at?: string
           user_id?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -82,10 +175,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -212,6 +311,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
