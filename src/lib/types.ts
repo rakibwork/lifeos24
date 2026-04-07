@@ -9,6 +9,7 @@ export interface Expense {
   id: number;
   note: string;
   amt: number;
+  category?: 'বাজার' | 'ফ্যামেলি' | 'ব্যাক্তিগত';
 }
 
 export interface Goal {
