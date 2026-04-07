@@ -95,7 +95,8 @@ const NavBar = ({ userName, selectedDate, onDateChange, onSettings, onProfile, o
                 {onSettings && <button onClick={() => { onSettings(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary transition flex items-center gap-2">⚙️ সেটিংস</button>}
                 {onProfile && <button onClick={() => { onProfile(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary transition flex items-center gap-2">👤 প্রোফাইল</button>}
                 {isAdmin && (
-                  <button onClick={() => { setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary transition flex items-center gap-2">🛡️ এডমিন</button>
+                  <button onClick={() => { onAdmin?.(); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-bold text-foreground hover:bg-secondary transition flex items-center gap-2">🛡️ এডমিন</button>
+                )}
                 )}
                 {onLogout && <button onClick={onLogout} className="w-full text-left px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/10 transition flex items-center gap-2">🚪 লগআউট</button>}
               </div>
