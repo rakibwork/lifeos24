@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin, getAllUsers, getAdminStats, getActivityLogs, updateUserStatus, toggleVerified, sendAdminNotification, deleteUserAccount, type AdminUser, type ActivityLog } from "@/lib/adminStore";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Users, UserCheck, UserX, Lock, Unlock, Eye, Bell, Activity, Search, ArrowLeft, BadgeCheck, Ban, Clock, Send, Trash2, LogIn } from "lucide-react";
+import { Shield, Users, UserCheck, UserX, Lock, Unlock, Eye, Bell, Activity, Search, ArrowLeft, BadgeCheck, Ban, Clock, Send, Trash2, LogIn, Megaphone, Wifi, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { bn } from "date-fns/locale";
 import { toast } from "sonner";
@@ -31,7 +31,6 @@ const AdminPage = () => {
   const [stats, setStats] = useState({ total: 0, active: 0, blocked: 0, suspended: 0, locked: 0, verified: 0, online: 0 });
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [actionModal, setActionModal] = useState<{ type: string; user: AdminUser } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{ title: string; desc: string; onConfirm: () => void } | null>(null);
   const [reason, setReason] = useState("");
@@ -39,6 +38,15 @@ const AdminPage = () => {
   const [notifTitle, setNotifTitle] = useState("");
   const [notifMessage, setNotifMessage] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  // Admin notice (broadcast)
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [noticeTitle, setNoticeTitle] = useState("");
+  const [noticeMessage, setNoticeMessage] = useState("");
+  const [noticeSending, setNoticeSending] = useState(false);
+  // Online users modal
+  const [showOnlineModal, setShowOnlineModal] = useState(false);
+  // Login as user loading
+  const [loginAsLoading, setLoginAsLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const check = async () => {
@@ -67,6 +75,8 @@ const AdminPage = () => {
     (u.mobile || "").includes(search) ||
     u.status === search
   );
+
+  const onlineUsers = users.filter(u => u.is_online);
 
   const showConfirm = (title: string, desc: string, onConfirm: () => void) => {
     setConfirmModal({ title, desc, onConfirm });
@@ -130,6 +140,56 @@ const AdminPage = () => {
     }
   };
 
+  const handleLoginAsUser = async (user: AdminUser) => {
+    setLoginAsLoading(user.user_id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("সেশন নেই"); return; }
+
+      const res = await supabase.functions.invoke("admin-login-as-user", {
+        body: { target_user_id: user.user_id },
+      });
+
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || "লগইন ব্যর্থ");
+        return;
+      }
+
+      const { verification_url } = res.data;
+      if (verification_url) {
+        // Open in new tab
+        window.open(verification_url, '_blank');
+        toast.success(`${user.name}-এর অ্যাকাউন্টে লগইন লিংক তৈরি হয়েছে`);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "লগইন ব্যর্থ");
+    } finally {
+      setLoginAsLoading(null);
+    }
+  };
+
+  const handleBroadcastNotice = async () => {
+    if (!noticeTitle.trim() || !noticeMessage.trim()) {
+      toast.error("টাইটেল ও মেসেজ দিন");
+      return;
+    }
+    setNoticeSending(true);
+    try {
+      // Send to all users
+      const promises = users.map(u =>
+        sendAdminNotification(u.user_id, `📢 ${noticeTitle}`, noticeMessage, "info")
+      );
+      await Promise.all(promises);
+      toast.success(`${users.length} জন ইউজারকে নোটিশ পাঠানো হয়েছে!`);
+      setShowNoticeModal(false);
+      setNoticeTitle("");
+      setNoticeMessage("");
+    } catch (e: any) {
+      toast.error("নোটিশ পাঠাতে সমস্যা হয়েছে");
+    }
+    setNoticeSending(false);
+  };
+
   const timeAgo = (d: string) => { try { return formatDistanceToNow(new Date(d), { addSuffix: true, locale: bn }); } catch { return ""; } };
 
   if (loading) return (
@@ -180,24 +240,37 @@ const AdminPage = () => {
               {t.label}
             </button>
           ))}
+          {/* Admin Notice button next to logs */}
+          <button
+            onClick={() => setShowNoticeModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition whitespace-nowrap bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-700 hover:from-amber-500/30 hover:to-orange-500/30"
+          >
+            <Megaphone className="w-4 h-4" />
+            এডমিন নোটিশ
+          </button>
         </div>
 
         {/* Dashboard Tab */}
         {tab === "dashboard" && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {[
-              { label: "মোট ইউজার", value: stats.total, icon: Users, color: "text-blue-500" },
-              { label: "সক্রিয়", value: stats.active, icon: UserCheck, color: "text-emerald-500" },
-              { label: "ব্লক", value: stats.blocked, icon: Ban, color: "text-red-500" },
-              { label: "সাসপেন্ড", value: stats.suspended, icon: UserX, color: "text-amber-500" },
-              { label: "লক", value: stats.locked, icon: Lock, color: "text-purple-500" },
-              { label: "ভেরিফাইড", value: stats.verified, icon: BadgeCheck, color: "text-blue-600" },
-              { label: "অনলাইন", value: stats.online, icon: Activity, color: "text-green-500" },
+              { label: "মোট ইউজার", value: stats.total, icon: Users, color: "text-blue-500", clickable: false },
+              { label: "সক্রিয়", value: stats.active, icon: UserCheck, color: "text-emerald-500", clickable: false },
+              { label: "ব্লক", value: stats.blocked, icon: Ban, color: "text-red-500", clickable: false },
+              { label: "সাসপেন্ড", value: stats.suspended, icon: UserX, color: "text-amber-500", clickable: false },
+              { label: "লক", value: stats.locked, icon: Lock, color: "text-purple-500", clickable: false },
+              { label: "ভেরিফাইড", value: stats.verified, icon: BadgeCheck, color: "text-blue-600", clickable: false },
+              { label: "অনলাইন", value: stats.online, icon: Wifi, color: "text-green-500", clickable: true },
             ].map(s => (
-              <div key={s.label} className="bg-card rounded-2xl border border-border p-4 text-center">
+              <div
+                key={s.label}
+                onClick={() => s.clickable && setShowOnlineModal(true)}
+                className={`bg-card rounded-2xl border border-border p-4 text-center transition ${s.clickable ? 'cursor-pointer hover:border-green-500/50 hover:shadow-lg' : ''}`}
+              >
                 <s.icon className={`w-6 h-6 mx-auto mb-2 ${s.color}`} />
                 <div className="text-2xl font-black text-foreground">{s.value}</div>
                 <div className="text-xs text-muted-foreground font-bold mt-1">{s.label}</div>
+                {s.clickable && <div className="text-[10px] text-green-500 mt-1">ক্লিক করে দেখুন →</div>}
               </div>
             ))}
           </div>
@@ -233,6 +306,9 @@ const AdminPage = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      {u.is_online && (
+                        <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" title="অনলাইন" />
+                      )}
                       <span className={`text-xs px-2 py-1 rounded-full border font-bold ${statusColors[u.status] || statusColors.active}`}>
                         {statusLabels[u.status] || "সক্রিয়"}
                       </span>
@@ -242,7 +318,7 @@ const AdminPage = () => {
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border">
                     {u.status !== 'active' && (
-                      <button onClick={() => { setActionModal({ type: 'activate', user: u }); handleAction(); }} className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 font-bold hover:bg-emerald-500/20 transition flex items-center gap-1">
+                      <button onClick={() => { setActionModal({ type: 'activate', user: u }); setTimeout(() => handleAction(), 0); }} className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 font-bold hover:bg-emerald-500/20 transition flex items-center gap-1">
                         <Unlock className="w-3 h-3" /> সক্রিয়
                       </button>
                     )}
@@ -264,6 +340,13 @@ const AdminPage = () => {
                     </button>
                     <button onClick={() => setActionModal({ type: 'notify', user: u })} className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition flex items-center gap-1">
                       <Bell className="w-3 h-3" /> নোটিফাই
+                    </button>
+                    <button
+                      onClick={() => handleLoginAsUser(u)}
+                      disabled={loginAsLoading === u.user_id}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 font-bold hover:bg-indigo-500/20 transition flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <LogIn className="w-3 h-3" /> {loginAsLoading === u.user_id ? "..." : "লগিন"}
                     </button>
                   </div>
                 </div>
@@ -292,7 +375,7 @@ const AdminPage = () => {
         )}
       </main>
 
-      {/* Action Modal */}
+      {/* Notify Modal */}
       {actionModal && actionModal.type === 'notify' && (
         <div className="fixed inset-0 z-50 bg-foreground/50 flex items-center justify-center p-4" onClick={() => setActionModal(null)}>
           <div className="bg-card rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
@@ -310,6 +393,7 @@ const AdminPage = () => {
         </div>
       )}
 
+      {/* Block/Suspend/Lock Modal */}
       {actionModal && ['block', 'suspend', 'lock'].includes(actionModal.type) && (
         <div className="fixed inset-0 z-50 bg-foreground/50 flex items-center justify-center p-4" onClick={() => setActionModal(null)}>
           <div className="bg-card rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
@@ -328,6 +412,116 @@ const AdminPage = () => {
                 নিশ্চিত
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Broadcast Notice Modal */}
+      {showNoticeModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/50 flex items-center justify-center p-4" onClick={() => setShowNoticeModal(false)}>
+          <div className="bg-card rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-border" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Megaphone className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-foreground">এডমিন নোটিশ</h3>
+                <p className="text-xs text-muted-foreground">সকল ইউজারকে একসাথে জানান</p>
+              </div>
+              <button onClick={() => setShowNoticeModal(false)} className="ml-auto p-2 rounded-full hover:bg-secondary transition">
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 mb-4">
+              <p className="text-xs text-amber-600 font-bold flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                এই নোটিশ {users.length} জন ইউজারকে পাঠানো হবে
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-bold text-foreground mb-1.5 block">নোটিশের শিরোনাম</label>
+                <input
+                  value={noticeTitle}
+                  onChange={e => setNoticeTitle(e.target.value)}
+                  placeholder="যেমন: গুরুত্বপূর্ণ আপডেট"
+                  className="w-full p-4 rounded-2xl bg-secondary border border-border text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold text-foreground mb-1.5 block">নোটিশের বিবরণ</label>
+                <textarea
+                  value={noticeMessage}
+                  onChange={e => setNoticeMessage(e.target.value)}
+                  placeholder="আপনার নোটিশ এখানে লিখুন..."
+                  rows={4}
+                  className="w-full p-4 rounded-2xl bg-secondary border border-border text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowNoticeModal(false)} className="flex-1 py-3 rounded-2xl bg-secondary text-foreground font-bold text-sm hover:bg-secondary/80 transition">
+                বাতিল
+              </button>
+              <button
+                onClick={handleBroadcastNotice}
+                disabled={noticeSending || !noticeTitle.trim() || !noticeMessage.trim()}
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 hover:opacity-90 transition shadow-lg"
+              >
+                <Send className="w-4 h-4" />
+                {noticeSending ? "পাঠানো হচ্ছে..." : "সকলকে পাঠান"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Online Users Modal */}
+      {showOnlineModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/50 flex items-center justify-center p-4" onClick={() => setShowOnlineModal(false)}>
+          <div className="bg-card rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-border max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Wifi className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-foreground">অনলাইন ইউজার</h3>
+                <p className="text-xs text-muted-foreground">{onlineUsers.length} জন এখন অনলাইনে</p>
+              </div>
+              <button onClick={() => setShowOnlineModal(false)} className="ml-auto p-2 rounded-full hover:bg-secondary transition">
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            {onlineUsers.length === 0 ? (
+              <div className="text-center py-10">
+                <Wifi className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">কেউ অনলাইনে নেই</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {onlineUsers.map(u => (
+                  <div key={u.user_id} className="flex items-center gap-3 p-3 rounded-2xl bg-secondary/50 border border-border hover:border-green-500/30 transition">
+                    <div className="relative">
+                      <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-black">
+                        {u.name.charAt(0) || "?"}
+                      </div>
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-card" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-foreground truncate">{u.name || "নামহীন"}</span>
+                        {u.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
+                      </div>
+                      <p className="text-xs text-green-600 font-medium">অনলাইন</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
