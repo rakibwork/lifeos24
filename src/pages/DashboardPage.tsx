@@ -33,6 +33,7 @@ import NewDayDialog from "@/components/dashboard/NewDayDialog";
 import NoDataDialog from "@/components/dashboard/NoDataDialog";
 import SoundAlertManager from "@/components/dashboard/SoundAlertManager";
 import MobileBottomNav from "@/components/dashboard/MobileBottomNav";
+import WeatherCard from "@/components/dashboard/WeatherCard";
 import { usePresence } from "@/hooks/usePresence";
 
 const defaultDayData: DayData = {
@@ -353,6 +354,7 @@ const DashboardPage = () => {
             <HabitCard habits={data.habits} onHabitsChange={habits => updateData({ habits })} />
             <QuickNoteCard notes={quickNotes} onNotesChange={updateQuickNotes} />
             <SleepTracker sleepStart={data.sleepStart} sleepEnd={data.sleepEnd} sleepHours={data.sleepHours} onUpdate={(sleepStart, sleepEnd, sleepHours) => updateData({ sleepStart, sleepEnd, sleepHours })} />
+            <WeatherCard />
           </div>
         </div>
 
@@ -397,6 +399,7 @@ const DashboardPage = () => {
           {showInMobile("more") && (
             <>
               <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
+              <WeatherCard />
               <WeeklyAnalytics />
             </>
           )}
