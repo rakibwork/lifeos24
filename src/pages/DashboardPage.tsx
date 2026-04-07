@@ -274,9 +274,8 @@ const DashboardPage = () => {
               <ProgressCard progress={progress} />
             </div>
             <div className="md:hidden space-y-3">
-              <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
-              <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
               <ProgressCard progress={progress} />
+              <NamazTracker namaz={data.namaz} onNamazChange={namaz => updateData({ namaz })} />
               <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
             </div>
           </>
@@ -314,16 +313,17 @@ const DashboardPage = () => {
         <div className="md:hidden space-y-3">
           {showInMobile("tasks") && (
             <>
-              <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
-              <GoalCard goals={goals} onGoalsChange={updateGoals} />
-              <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
               <ExpenseCard expenses={data.expenses} onExpensesChange={expenses => updateData({ expenses })} />
+              <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
+              <DiaryCard notebooks={data.notebooks} activeNoteId={data.activeNoteId} onUpdate={(notebooks, activeNoteId) => updateData({ notebooks, activeNoteId })} />
+              <QuickNoteCard notes={quickNotes} onNotesChange={updateQuickNotes} />
             </>
           )}
 
           {showInMobile("health") && (
             <>
-              <NamazTracker namaz={data.namaz} onNamazChange={namaz => updateData({ namaz })} />
+              <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
+              <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
               <MedicineCard
                 medicines={extraSettings.medicines || []}
                 doses={data.medicineDoses || []}
@@ -334,16 +334,16 @@ const DashboardPage = () => {
                 }}
                 onDosesChange={medicineDoses => updateData({ medicineDoses })}
               />
-              <HabitCard habits={data.habits} onHabitsChange={habits => updateData({ habits })} />
               <SleepTracker sleepStart={data.sleepStart} sleepEnd={data.sleepEnd} sleepHours={data.sleepHours} onUpdate={(sleepStart, sleepEnd, sleepHours) => updateData({ sleepStart, sleepEnd, sleepHours })} />
             </>
           )}
 
           {showInMobile("notes") && (
             <>
-              <DiaryCard notebooks={data.notebooks} activeNoteId={data.activeNoteId} onUpdate={(notebooks, activeNoteId) => updateData({ notebooks, activeNoteId })} />
-              <QuickNoteCard notes={quickNotes} onNotesChange={updateQuickNotes} />
+              <GoalCard goals={goals} onGoalsChange={updateGoals} />
+              <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
               <PermNoteCard notes={permNotes} onNotesChange={updatePermNotes} />
+              <HabitCard habits={data.habits} onHabitsChange={habits => updateData({ habits })} />
             </>
           )}
 
