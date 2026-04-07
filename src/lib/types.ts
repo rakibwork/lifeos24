@@ -47,6 +47,11 @@ export interface Medicine {
   name: string;
   dose: string;
   times: string[];
+  totalPills: number;
+  remainingPills: number;
+  totalDays: number;
+  remainingDays: number;
+  startDate: string;
 }
 
 export interface MedicineDose {
