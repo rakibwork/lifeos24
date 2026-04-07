@@ -272,10 +272,33 @@ const DashboardPage = () => {
         onLogout={handleLogout}
         isAdmin={userIsAdmin}
         onAdmin={() => navigate("/admin")}
+        isVerified={isVerified}
         notificationSlot={
           <NotificationBell data={data} namazTimes={namazTimes} extraSettings={extraSettings} goals={goals} />
         }
       />
+
+      {/* Lock overlay */}
+      {lockInfo?.locked && (
+        <div className="bg-purple-500/10 border-b-2 border-purple-500/30 p-4">
+          <div className="max-w-6xl mx-auto flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center shrink-0">
+              <span className="text-lg">🔒</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-purple-700">অ্যাকাউন্ট লক করা আছে</p>
+              {lockInfo.lockUntil && (
+                <p className="text-xs text-purple-600">
+                  আনলক হবে: {new Date(lockInfo.lockUntil).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              )}
+              {lockInfo.reason && (
+                <p className="text-xs text-purple-600 mt-0.5">কারণ: {lockInfo.reason}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live notification toasts */}
       <NotificationToast data={data} namazTimes={namazTimes} extraSettings={extraSettings} goals={goals} />
