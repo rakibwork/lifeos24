@@ -94,7 +94,12 @@ const NavBar = ({ userName, selectedDate, onDateChange, onSettings, onProfile, o
             <button onClick={() => setMenuOpen(!menuOpen)} className="flex items-center gap-1.5 bg-card border border-border px-2 md:px-3 py-1.5 rounded-full text-sm font-bold text-foreground hover:border-primary transition">
               <span className="w-7 h-7 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-black">{userName.charAt(0)}</span>
               <span className="hidden md:inline text-sm">{userName}</span>
-              {isVerified && <BadgeCheck className="w-4 h-4 text-blue-500 shrink-0" />}
+              {isVerified && (
+                <span className="relative inline-flex items-center justify-center shrink-0">
+                  <span className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                  <BadgeCheck className="w-4 h-4 text-blue-500 drop-shadow-[0_0_4px_rgba(59,130,246,0.5)]" />
+                </span>
+              )}
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-xl w-44 overflow-hidden animate-fade-in-up z-50">

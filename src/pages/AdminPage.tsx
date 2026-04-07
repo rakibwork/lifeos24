@@ -70,6 +70,49 @@ const AdminPage = () => {
     setLogs(l);
   }, []);
 
+  // Realtime subscription for live online/offline updates
+  useEffect(() => {
+    if (!authorized) return;
+    const channel = supabase
+      .channel('admin-profiles-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
+        (payload) => {
+          const updated = payload.new as any;
+          setUsers(prev => prev.map(u =>
+            u.user_id === updated.user_id
+              ? { ...u, is_online: updated.is_online ?? u.is_online, last_seen: updated.last_seen ?? u.last_seen, is_verified: updated.is_verified ?? u.is_verified, status: updated.status ?? u.status, suspend_reason: updated.suspend_reason, lock_until: updated.lock_until }
+              : u
+          ));
+          setStats(prev => {
+            // Recalculate online count from updated users
+            return prev; // will be recalculated below
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [authorized]);
+
+  // Recalculate stats when users change
+  useEffect(() => {
+    if (users.length === 0) return;
+    setStats(prev => ({
+      ...prev,
+      total: users.length,
+      active: users.filter(u => (u.status || 'active') === 'active').length,
+      blocked: users.filter(u => u.status === 'blocked').length,
+      suspended: users.filter(u => u.status === 'suspended').length,
+      locked: users.filter(u => u.status === 'locked').length,
+      verified: users.filter(u => u.is_verified).length,
+      online: users.filter(u => u.is_online).length,
+    }));
+  }, [users]);
+
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
     (u.mobile || "").includes(search) ||
@@ -294,20 +337,40 @@ const AdminPage = () => {
                 <div key={u.user_id} className="bg-card rounded-2xl border border-border p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-black shrink-0">
-                        {u.name.charAt(0) || "?"}
+                      <div className="relative">
+                        <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-black shrink-0">
+                          {u.name.charAt(0) || "?"}
+                        </div>
+                        {u.is_online && (
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-card animate-pulse" />
+                        )}
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <span className="text-sm font-bold text-foreground truncate">{u.name || "নামহীন"}</span>
-                          {u.is_verified && <BadgeCheck className="w-4 h-4 text-blue-500 shrink-0" />}
+                          {u.is_verified && (
+                            <span className="relative inline-flex items-center justify-center shrink-0">
+                              <span className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                              <BadgeCheck className="w-4.5 h-4.5 text-blue-500 drop-shadow-[0_0_4px_rgba(59,130,246,0.5)]" />
+                            </span>
+                          )}
                         </div>
-                        <div className="text-xs text-muted-foreground">{u.mobile || "—"}</div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{u.mobile || "—"}</span>
+                          {u.last_seen && (
+                            <span className="text-[10px] opacity-70">• শেষ দেখা: {timeAgo(u.last_seen)}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {u.is_online && (
-                        <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" title="অনলাইন" />
+                      {u.is_online ? (
+                        <span className="flex items-center gap-1 text-[10px] text-green-600 font-bold bg-green-500/10 px-2 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                          অনলাইন
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/60 font-medium">অফলাইন</span>
                       )}
                       <span className={`text-xs px-2 py-1 rounded-full border font-bold ${statusColors[u.status] || statusColors.active}`}>
                         {statusLabels[u.status] || "সক্রিয়"}
