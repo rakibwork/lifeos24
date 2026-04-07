@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Task } from "@/lib/types";
+import DeleteConfirmDialog from "./DeleteConfirmDialog";
 
 interface Props {
   tasks: Task[];
@@ -9,6 +10,7 @@ interface Props {
 const TaskCard = ({ tasks, onTasksChange }: Props) => {
   const [text, setText] = useState("");
   const [time, setTime] = useState("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -26,10 +28,6 @@ const TaskCard = ({ tasks, onTasksChange }: Props) => {
     onTasksChange(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
   };
 
-  const deleteTask = (id: number) => {
-    onTasksChange(tasks.filter(t => t.id !== id));
-  };
-
   const getTimeLeft = (taskTime: string) => {
     if (!taskTime) return null;
     const now = new Date();
@@ -44,41 +42,45 @@ const TaskCard = ({ tasks, onTasksChange }: Props) => {
     return `${mins}মি বাকি`;
   };
 
-  const getTaskClass = (task: Task) => {
-    if (task.done) return 'completed';
-    if (!task.time) return '';
-    const now = new Date();
-    const [h, m] = task.time.split(':').map(Number);
-    const target = new Date();
-    target.setHours(h, m, 0, 0);
-    const diff = target.getTime() - now.getTime();
-    if (diff < 0) return 'task-danger';
-    if (diff < 1800000) return 'task-warning';
-    return '';
-  };
-
   return (
-    <div className="bg-card rounded-2xl p-4 border-2 border-t-4 border-life-pink shadow-sm">
-      <h3 className="text-sm font-bold mb-3 text-life-pink">📅 আজকের কাজ</h3>
-      <div className="flex gap-2 mb-3">
-        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="কি কি কাজ করবেন?" className="flex-1 p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground" />
-        <input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-20 p-2 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground" />
-        <button onClick={addTask} className="bg-life-pink text-primary-foreground px-4 py-2 rounded-xl font-bold text-sm hover:opacity-90 transition">যোগ</button>
+    <div className="bg-card rounded-2xl p-5 border border-border border-t-4 border-t-life-green shadow-sm">
+      <h3 className="font-bold text-lg text-life-green mb-4">📅 আজকের কাজ</h3>
+      <div className="flex flex-wrap gap-2 mb-4">
+        <input type="text" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="কি কি করবেন?" className="flex-1 min-w-0 p-3 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground focus:border-primary transition" />
+        <div className="flex gap-2 shrink-0">
+          <input type="time" value={time} onChange={e => setTime(e.target.value)} className="p-3 w-28 rounded-xl bg-secondary border border-border outline-none text-sm font-bold text-foreground" />
+          <button onClick={addTask} className="bg-life-green text-primary-foreground px-4 rounded-xl font-bold hover:opacity-90 transition active:scale-95 whitespace-nowrap">যোগ</button>
+        </div>
       </div>
-      <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
-        {tasks.map(task => (
-          <div key={task.id} className={`flex items-center gap-3 p-3 rounded-xl border border-border transition-all ${getTaskClass(task)}`}>
-            <input type="checkbox" checked={task.done} onChange={() => toggleTask(task.id)} className="w-4 h-4 accent-life-pink rounded" />
-            <div className="flex-1">
-              <span className={`text-sm font-bold ${task.done ? 'line-through opacity-50' : ''}`}>{task.text}</span>
-              {task.time && !task.done && (
-                <div className="text-[10px] text-muted-foreground mt-0.5">{task.time} — {getTimeLeft(task.time)}</div>
-              )}
-            </div>
-            <button onClick={() => deleteTask(task.id)} className="text-destructive/40 hover:text-destructive transition text-xs">🗑️</button>
-          </div>
-        ))}
-      </div>
+      <ul className="space-y-2 max-h-64 overflow-y-auto no-scrollbar">
+        {tasks.map(t => {
+          const timeLeft = !t.done ? getTimeLeft(t.time) : null;
+          return (
+            <li key={t.id} className="flex justify-between items-center p-3 bg-secondary rounded-xl border border-border group transition">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <input type="checkbox" checked={t.done} onChange={() => toggleTask(t.id)} className="w-5 h-5 accent-life-green rounded shrink-0" />
+                <span className={`text-sm font-bold text-foreground truncate ${t.done ? 'completed' : ''}`}>{t.text}</span>
+                {t.time && (
+                  <span className="text-[10px] text-muted-foreground font-bold bg-card px-2 py-0.5 rounded shrink-0">{t.time}</span>
+                )}
+                {timeLeft && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${timeLeft === 'সময় শেষ!' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                    ⏳ {timeLeft}
+                  </span>
+                )}
+              </div>
+              <button onClick={() => setDeleteId(t.id)} className="text-destructive/40 hover:text-destructive transition opacity-0 group-hover:opacity-100 sm:opacity-0 max-sm:opacity-100 ml-2">🗑️</button>
+            </li>
+          );
+        })}
+      </ul>
+      <DeleteConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => { if (deleteId !== null) { onTasksChange(tasks.filter(t => t.id !== deleteId)); setDeleteId(null); } }}
+        title="কাজটি ডিলেট করবেন?"
+        description="এই কাজটি স্থায়ীভাবে মুছে ফেলা হবে।"
+      />
     </div>
   );
 };

@@ -12,7 +12,7 @@ const AIAssistant = ({ data, goals }: Props) => {
   const [insights, setInsights] = useState<string[]>([]);
 
   useEffect(() => {
-    const buildInsights = async () => {
+    const buildInsights = () => {
       const msgs: string[] = [];
       const now = new Date();
       const namazTimes = getNamazTimes();
@@ -60,11 +60,11 @@ const AIAssistant = ({ data, goals }: Props) => {
   }, [insights.length]);
 
   return (
-    <div className="bg-gradient-to-r from-secondary to-secondary/50 rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-border">
-      <div className="text-4xl animate-bounce-slow flex-shrink-0">🤖</div>
-      <div>
-        <div className="text-[11px] font-black text-primary uppercase tracking-wider mb-0.5">AI Assistant</div>
-        <div className="text-sm font-bold text-foreground animate-fade-in-up">{insights[currentIndex] || "আপনার ডেটা বিশ্লেষণ করা হচ্ছে..."}</div>
+    <div className="bg-card rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm border border-border flex items-center gap-3 md:gap-4 relative overflow-hidden min-h-[80px] md:min-h-[100px]">
+      <div className="w-10 h-10 md:w-12 md:h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl md:text-2xl shadow-lg shrink-0 animate-bounce">🤖</div>
+      <div className="z-10 w-full min-w-0">
+        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">AI Assistant</p>
+        <div className="text-sm md:text-base font-bold text-foreground transition-all duration-500 truncate">{insights[currentIndex] || "আপনার ডেটা বিশ্লেষণ করা হচ্ছে..."}</div>
       </div>
     </div>
   );

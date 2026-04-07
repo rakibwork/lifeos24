@@ -1,7 +1,7 @@
 const WaterTracker = ({ water, onWaterChange }: { water: number; onWaterChange: (w: number) => void }) => (
-  <div className="bg-card rounded-2xl p-4 border-2 border-r-4 border-life-teal shadow-sm">
-    <div className="flex items-center justify-between mb-2">
-      <h3 className="text-sm font-bold">পানি পান</h3>
+  <div className="bg-card rounded-2xl p-5 border border-border border-l-4 border-l-life-teal shadow-sm">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-sm font-bold text-muted-foreground uppercase">পানি পান</h3>
       <span className="text-sm font-bold text-primary">{water}/৮</span>
     </div>
     <div className="flex items-center gap-2">

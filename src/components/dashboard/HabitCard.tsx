@@ -11,15 +11,15 @@ const HabitCard = ({ habits, onHabitsChange }: Props) => {
   };
 
   return (
-    <div className="bg-card rounded-2xl p-4 border-2 border-life-orange shadow-sm">
-      <h3 className="text-sm font-bold mb-3 text-life-orange">📋 রুটিন</h3>
-      {habits.length === 0 && <p className="text-xs text-muted-foreground">সেটিংস থেকে রুটিন যোগ করুন</p>}
+    <div className="bg-card rounded-2xl p-5 border border-border border-t-4 border-t-life-orange shadow-sm">
+      <h3 className="font-bold text-life-orange text-sm uppercase mb-4">📋 রুটিন</h3>
       <div className="space-y-2">
+        {habits.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">সেটিংস থেকে রুটিন যোগ করুন</p>}
         {habits.map(h => (
-          <label key={h.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary transition cursor-pointer">
+          <div key={h.id} className="flex items-center gap-3 bg-secondary p-3 rounded-xl border border-border">
             <input type="checkbox" checked={h.checked} onChange={() => toggle(h.id)} className="w-4 h-4 accent-life-orange rounded" />
-            <span className={`text-sm font-bold ${h.checked ? 'line-through opacity-50' : ''}`}>{h.title}</span>
-          </label>
+            <span className={`text-sm font-bold text-foreground ${h.checked ? 'completed' : ''}`}>{h.title}</span>
+          </div>
         ))}
       </div>
     </div>
