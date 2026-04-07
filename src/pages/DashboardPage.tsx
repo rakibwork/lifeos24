@@ -202,10 +202,16 @@ const DashboardPage = () => {
             <AdminNotifBanner />
             <AIAssistant data={data} goals={goals} />
             <SummaryCards data={data} accounts={accounts} monthlyExpense={monthlyExpense} extraSettings={extraSettings} />
-            <div className="grid grid-cols-3 gap-2 md:gap-4">
+            <div className="hidden md:grid grid-cols-3 gap-4">
               <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
               <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
               <ProgressCard progress={progress} />
+            </div>
+            <div className="md:hidden space-y-3">
+              <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
+              <WaterTracker water={data.water} onWaterChange={w => updateData({ water: w })} />
+              <ProgressCard progress={progress} />
+              <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
             </div>
           </>
         )}
@@ -246,8 +252,8 @@ const DashboardPage = () => {
             <>
               <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
               <GoalCard goals={goals} onGoalsChange={updateGoals} />
+              <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
               <ExpenseCard expenses={data.expenses} onExpensesChange={expenses => updateData({ expenses })} />
-              <DailySummary data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
             </>
           )}
 
@@ -279,7 +285,6 @@ const DashboardPage = () => {
 
           {showInMobile("more") && (
             <>
-              <AccountCard accounts={accounts} onAccountsChange={updateAccounts} />
               <WeeklyAnalytics />
             </>
           )}
