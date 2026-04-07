@@ -6,28 +6,13 @@ export interface SoundSettings {
   water: boolean;
 }
 
-const defaultSoundSettings: SoundSettings = {
+export const defaultSoundSettings: SoundSettings = {
   namaz: true,
   medicine: true,
   task: false,
   sleep: true,
   water: false,
 };
-
-const STORAGE_KEY = 'lifeos_sound_settings';
-
-export function getSoundSettings(): SoundSettings {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...defaultSoundSettings, ...JSON.parse(saved) } : defaultSoundSettings;
-  } catch {
-    return defaultSoundSettings;
-  }
-}
-
-export function saveSoundSettings(settings: SoundSettings): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-}
 
 // Generate a pleasant notification sound using Web Audio API
 export function playNotificationSound(type: 'gentle' | 'alert' | 'reminder' = 'gentle'): void {

@@ -1,24 +1,24 @@
 import { useEffect, useRef } from "react";
 import type { DayData, NamazTimes, ExtraSettings, Medicine } from "@/lib/types";
-import { getSoundSettings, playNotificationSound } from "@/lib/soundManager";
+import { playNotificationSound, type SoundSettings } from "@/lib/soundManager";
 
 interface Props {
   data: DayData;
   namazTimes: NamazTimes;
   extraSettings: ExtraSettings;
+  soundSettings: SoundSettings;
 }
 
-const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
+const SoundAlertManager = ({ data, namazTimes, extraSettings, soundSettings }: Props) => {
   const alertedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const check = () => {
-      const settings = getSoundSettings();
       const now = new Date();
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
       // Namaz alerts
-      if (settings.namaz) {
+      if (soundSettings.namaz) {
         const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
         for (const key of prayers) {
           const pTime = namazTimes[key];
@@ -30,7 +30,7 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
       }
 
       // Medicine alerts
-      if (settings.medicine) {
+      if (soundSettings.medicine) {
         const medicines: Medicine[] = extraSettings.medicines || [];
         for (const med of medicines) {
           for (const t of med.times) {
@@ -44,7 +44,7 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
       }
 
       // Task time alerts
-      if (settings.task) {
+      if (soundSettings.task) {
         for (const task of data.tasks) {
           if (task.time && currentTime === task.time && !task.done && !alertedRef.current.has(`task-${task.id}-${task.time}`)) {
             alertedRef.current.add(`task-${task.id}-${task.time}`);
@@ -54,7 +54,7 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
       }
 
       // Sleep time alert
-      if (settings.sleep && extraSettings.sleepTime) {
+      if (soundSettings.sleep && extraSettings.sleepTime) {
         if (currentTime === extraSettings.sleepTime && !data.sleepStart && !alertedRef.current.has(`sleep-${extraSettings.sleepTime}`)) {
           alertedRef.current.add(`sleep-${extraSettings.sleepTime}`);
           playNotificationSound('reminder');
@@ -62,7 +62,7 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
       }
 
       // Water reminder every hour
-      if (settings.water && now.getMinutes() === 0 && data.water < 8) {
+      if (soundSettings.water && now.getMinutes() === 0 && data.water < 8) {
         const hourKey = `water-${now.getHours()}`;
         if (!alertedRef.current.has(hourKey)) {
           alertedRef.current.add(hourKey);
@@ -74,7 +74,7 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
     check();
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
-  }, [data, namazTimes, extraSettings]);
+  }, [data, namazTimes, extraSettings, soundSettings]);
 
   return null;
 };
