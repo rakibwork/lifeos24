@@ -1,5 +1,4 @@
 import type { DayData, ExtraSettings, AccountPerson } from "@/lib/types";
-import { loadDayData } from "@/lib/dataStore";
 
 interface Props {
   data: DayData;
@@ -8,29 +7,10 @@ interface Props {
   extraSettings: ExtraSettings;
 }
 
-const getMonthlyByCategory = (category: string) => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  let total = 0;
-  for (let d = 1; d <= now.getDate(); d++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const dayData = loadDayData(dateStr);
-    if (dayData) {
-      total += dayData.expenses
-        .filter(e => e.category === category)
-        .reduce((s, e) => s + e.amt, 0);
-    }
-  }
-  return total;
-};
-
 const SummaryCards = ({ data, accounts, monthlyExpense, extraSettings }: Props) => {
   const todayExp = data.expenses.reduce((s, e) => s + e.amt, 0);
   const todayBazar = data.expenses.filter(e => e.category === 'বাজার').reduce((s, e) => s + e.amt, 0);
   const todayPersonal = data.expenses.filter(e => e.category === 'ব্যাক্তিগত').reduce((s, e) => s + e.amt, 0);
-  const monthlyBazar = getMonthlyByCategory('বাজার');
-  const monthlyPersonal = getMonthlyByCategory('ব্যাক্তিগত');
 
   const totalPawa = Object.values(accounts).reduce((sum, person) =>
     sum + person.trans.filter(t => t.type === 'pawa').reduce((s, t) => s + t.amount, 0), 0);
@@ -39,8 +19,8 @@ const SummaryCards = ({ data, accounts, monthlyExpense, extraSettings }: Props) 
 
   const cards = [
     { icon: "💰", label: "আজকের খরচ", value: `৳${todayExp}`, color: "border-b-primary bg-life-blue-light" },
-    { icon: "🛒", label: "বাজার", value: `৳${todayBazar}`, sub: `মাসিক: ৳${monthlyBazar}`, color: "border-b-life-teal bg-life-teal-light" },
-    { icon: "👤", label: "ব্যাক্তিগত", value: `৳${todayPersonal}`, sub: `মাসিক: ৳${monthlyPersonal}`, color: "border-b-life-purple bg-life-purple-light" },
+    { icon: "🛒", label: "বাজার", value: `৳${todayBazar}`, color: "border-b-life-teal bg-life-teal-light" },
+    { icon: "👤", label: "ব্যাক্তিগত", value: `৳${todayPersonal}`, color: "border-b-life-purple bg-life-purple-light" },
     { icon: "📊", label: "মাসিক খরচ", value: `৳${monthlyExpense}`, sub: extraSettings.monthlyLimit ? `/ ৳${extraSettings.monthlyLimit}` : undefined, color: "border-b-life-orange bg-life-orange-light" },
     { icon: "📗", label: "মোট পাওনা", value: `৳${totalPawa}`, color: "border-b-life-emerald bg-life-emerald-light" },
     { icon: "📕", label: "মোট দেনা", value: `৳${totalDena}`, color: "border-b-destructive bg-life-red-light" },

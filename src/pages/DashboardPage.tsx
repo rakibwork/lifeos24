@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, saveExtraSettings, getMonthlyExpenses } from "@/lib/dataStore";
-import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, UserProfile, AccountPerson, Medicine } from "@/lib/types";
+import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, saveExtraSettings, getMonthlyExpenses, subscribeToUserData } from "@/lib/dataStore";
+import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, AccountPerson, Medicine } from "@/lib/types";
 import { isAdmin } from "@/lib/adminStore";
 import NavBar from "@/components/dashboard/NavBar";
 import NotificationBell from "@/components/dashboard/NotificationBell";
+import NotificationToast from "@/components/dashboard/NotificationToast";
 import AdminNotifBanner from "@/components/dashboard/AdminNotifBanner";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import MoodTracker from "@/components/dashboard/MoodTracker";
@@ -43,6 +44,7 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [userName, setUserName] = useState("ব্যবহারকারী");
+  const [userId, setUserId] = useState<string | null>(null);
   const [data, setData] = useState<DayData>(defaultDayData);
   const [goals, setGoalsState] = useState<Goal[]>([]);
   const [permNotes, setPermNotesState] = useState<PermNote[]>([]);
@@ -60,10 +62,12 @@ const DashboardPage = () => {
   const [noDataDate, setNoDataDate] = useState<string | null>(null);
   const [mobileSection, setMobileSection] = useState("home");
 
+  // Load user
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setUserId(user.id);
         const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).single();
         if (profile?.full_name) setUserName(profile.full_name);
       }
@@ -73,6 +77,7 @@ const DashboardPage = () => {
     loadUser();
   }, [showProfile]);
 
+  // New day dialog
   useEffect(() => {
     const lastShown = localStorage.getItem('lifeos_newday_shown');
     const today = getTodayStr();
@@ -95,34 +100,77 @@ const DashboardPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Load day data when date changes
   useEffect(() => {
-    const saved = loadDayData(selectedDate);
-    if (saved) {
-      setData(saved);
-    } else {
-      const today = getTodayStr();
-      if (selectedDate !== today) setNoDataDate(selectedDate);
-      const defs = getHabitDefinitions();
-      const freshHabits = defs.map(h => ({ ...h, checked: false }));
-      setData({ ...defaultDayData, habits: freshHabits });
-    }
+    const load = async () => {
+      const saved = await loadDayData(selectedDate);
+      if (saved) {
+        setData(saved);
+      } else {
+        const today = getTodayStr();
+        if (selectedDate !== today) setNoDataDate(selectedDate);
+        const defs = await getHabitDefinitions();
+        const freshHabits = defs.map(h => ({ ...h, checked: false }));
+        setData({ ...defaultDayData, habits: freshHabits });
+      }
+    };
+    load();
   }, [selectedDate]);
 
+  // Load all app data on mount
   useEffect(() => {
-    setGoalsState(getGoals());
-    setPermNotesState(getPermNotes());
-    setAccountsState(getAccounts());
-    setQuickNotesState(getQuickNotes());
-    setHabitDefs(getHabitDefinitions());
-    setNamazTimes(getNamazTimes());
-    setExtraSettings(getExtraSettings());
-    setMonthlyExpense(getMonthlyExpenses());
-    setLoading(false);
+    const loadAll = async () => {
+      const [g, pn, acc, qn, hd, nt, es, me] = await Promise.all([
+        getGoals(), getPermNotes(), getAccounts(), getQuickNotes(),
+        getHabitDefinitions(), getNamazTimes(), getExtraSettings(), getMonthlyExpenses()
+      ]);
+      setGoalsState(g);
+      setPermNotesState(pn);
+      setAccountsState(acc);
+      setQuickNotesState(qn);
+      setHabitDefs(hd);
+      setNamazTimes(nt);
+      setExtraSettings(es);
+      setMonthlyExpense(me);
+      setLoading(false);
+    };
+    loadAll();
   }, []);
 
+  // Recalculate monthly expense when expenses change
   useEffect(() => {
-    setMonthlyExpense(getMonthlyExpenses());
+    getMonthlyExpenses().then(setMonthlyExpense);
   }, [data.expenses]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = subscribeToUserData(
+      userId,
+      (date, dayData) => {
+        // If it's the currently selected date, update the view
+        if (date === selectedDate) {
+          setData(dayData);
+        }
+        // Recalculate monthly expenses
+        getMonthlyExpenses().then(setMonthlyExpense);
+      },
+      (key, value) => {
+        switch (key) {
+          case 'goals': setGoalsState(value as Goal[]); break;
+          case 'permNotes': setPermNotesState(value as PermNote[]); break;
+          case 'accounts': setAccountsState(value as Record<string, AccountPerson>); break;
+          case 'quickNotes': setQuickNotesState(value as string[]); break;
+          case 'habitDefs': setHabitDefs(value as Habit[]); break;
+          case 'namazTimes': setNamazTimes(value as NamazTimes); break;
+          case 'extraSettings': setExtraSettings(value as ExtraSettings); break;
+        }
+      }
+    );
+
+    return unsubscribe;
+  }, [userId, selectedDate]);
 
   const updateData = useCallback((partial: Partial<DayData>) => {
     setData(prev => {
@@ -157,6 +205,13 @@ const DashboardPage = () => {
     navigate("/login");
   };
 
+  const handleSettingsSave = useCallback(async () => {
+    const [nt, es, hd] = await Promise.all([getNamazTimes(), getExtraSettings(), getHabitDefinitions()]);
+    setNamazTimes(nt);
+    setExtraSettings(es);
+    setHabitDefs(hd);
+  }, []);
+
   const progress = (() => {
     const namazP = Object.values(data.namaz).filter(Boolean).length * 5;
     const waterP = Math.min(data.water * 2, 16);
@@ -166,7 +221,6 @@ const DashboardPage = () => {
     return Math.min(100, Math.round(namazP + waterP + workP));
   })();
 
-  // Mobile section visibility
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const showInMobile = (section: string) => !isMobile || mobileSection === section;
 
@@ -191,16 +245,18 @@ const DashboardPage = () => {
         isAdmin={userIsAdmin}
         onAdmin={() => navigate("/admin")}
         notificationSlot={
-          <NotificationBell data={data} namazTimes={namazTimes} extraSettings={extraSettings} />
+          <NotificationBell data={data} namazTimes={namazTimes} extraSettings={extraSettings} goals={goals} />
         }
       />
 
+      {/* Live notification toasts */}
+      <NotificationToast data={data} namazTimes={namazTimes} extraSettings={extraSettings} goals={goals} />
+
       <main className="max-w-6xl mx-auto p-2 md:p-8 space-y-3 md:space-y-6">
-        {/* Home section - always visible on desktop, conditional on mobile */}
         {showInMobile("home") && (
           <>
             <AdminNotifBanner />
-            <AIAssistant data={data} goals={goals} />
+            <AIAssistant data={data} goals={goals} namazTimes={namazTimes} extraSettings={extraSettings} />
             <SummaryCards data={data} accounts={accounts} monthlyExpense={monthlyExpense} extraSettings={extraSettings} />
             <div className="hidden md:grid grid-cols-3 gap-4">
               <MoodTracker mood={data.mood} onMoodChange={m => updateData({ mood: m })} />
@@ -216,7 +272,6 @@ const DashboardPage = () => {
           </>
         )}
 
-        {/* Desktop: full layout, Mobile: section-based */}
         <div className="hidden md:grid md:grid-cols-12 gap-4 md:gap-6">
           <div className="md:col-span-8 space-y-4 md:space-y-6">
             <TaskCard tasks={data.tasks} onTasksChange={tasks => updateData({ tasks })} />
@@ -246,7 +301,6 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Mobile sections */}
         <div className="md:hidden space-y-3">
           {showInMobile("tasks") && (
             <>
@@ -302,6 +356,7 @@ const DashboardPage = () => {
           extraSettings={extraSettings}
           habitDefs={habitDefs}
           onClose={() => setShowSettings(false)}
+          onSave={handleSettingsSave}
         />
       )}
 

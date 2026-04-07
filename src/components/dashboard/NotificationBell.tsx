@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import type { DayData, NamazTimes, ExtraSettings, Goal } from "@/lib/types";
-import { getGoals } from "@/lib/dataStore";
 
 interface Notification {
   id: string;
@@ -13,13 +12,14 @@ interface Props {
   data: DayData;
   namazTimes: NamazTimes;
   extraSettings: ExtraSettings;
+  goals: Goal[];
 }
 
 const prayerNames: Record<string, string> = {
   fajr: 'ফজর', dhuhr: 'যোহর', asr: 'আসর', maghrib: 'মাগরিব', isha: 'এশা'
 };
 
-function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSettings: ExtraSettings): Notification[] {
+function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSettings: ExtraSettings, goals: Goal[]): Notification[] {
   const notifs: Notification[] = [];
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -37,7 +37,7 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
     }
   }
 
-  // Task notifications - 20 min before & overdue
+  // Task notifications
   for (const task of data.tasks) {
     if (task.done || !task.time) continue;
     const [h, m] = task.time.split(':').map(Number);
@@ -49,8 +49,7 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
     }
   }
 
-  // Goal notifications - 5 days before target
-  const goals: Goal[] = getGoals();
+  // Goal notifications
   for (const goal of goals) {
     if (!goal.target) continue;
     const targetDate = new Date(goal.target);
@@ -62,23 +61,19 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
     }
   }
 
-  // No mood set
   if (!data.mood) {
     notifs.push({ id: 'mood', icon: '😶', message: 'আজকের অনুভূতি সেট করা হয়নি', type: 'info' });
   }
 
-  // Low water
   if (data.water < 4) {
     notifs.push({ id: 'water', icon: '💧', message: `পানি পান মাত্র ${data.water}/৮ গ্লাস হয়েছে`, type: 'warning' });
   }
 
-  // Pending tasks count
   const pendingCount = data.tasks.filter(t => !t.done).length;
   if (pendingCount > 0) {
     notifs.push({ id: 'tasks-total', icon: '📋', message: `${pendingCount}টি কাজ বাকি আছে`, type: 'warning' });
   }
 
-  // Habits unchecked
   if (data.habits.length > 0) {
     const unchecked = data.habits.filter(h => !h.checked).length;
     if (unchecked > 0) {
@@ -86,7 +81,6 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
     }
   }
 
-  // Sleep time check
   if (extraSettings.sleepTime) {
     const [sh, sm] = extraSettings.sleepTime.split(':').map(Number);
     if (currentMinutes > sh * 60 + sm && !data.sleepStart) {
@@ -94,12 +88,10 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
     }
   }
 
-  // No diary written
   if (data.notebooks.every(n => !n.content.trim())) {
     notifs.push({ id: 'diary', icon: '📝', message: 'আজ ডায়েরিতে কিছু লেখা হয়নি', type: 'info' });
   }
 
-  // Missed medicines
   if (data.medicineDoses) {
     const missed = data.medicineDoses.filter(d => !d.taken).filter(d => {
       const [h, m] = d.time.split(':').map(Number);
@@ -113,11 +105,11 @@ function generateNotifications(data: DayData, namazTimes: NamazTimes, extraSetti
   return notifs;
 }
 
-const NotificationBell = ({ data, namazTimes, extraSettings }: Props) => {
+const NotificationBell = ({ data, namazTimes, extraSettings, goals }: Props) => {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
-  const allNotifications = generateNotifications(data, namazTimes, extraSettings);
+  const allNotifications = generateNotifications(data, namazTimes, extraSettings, goals);
   const notifications = allNotifications.filter(n => !dismissed.has(n.id));
 
   useEffect(() => {

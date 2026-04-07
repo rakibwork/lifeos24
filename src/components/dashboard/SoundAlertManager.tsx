@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { DayData, NamazTimes, ExtraSettings, Medicine } from "@/lib/types";
-import { getSoundSettings, playNotificationSound, speakBengali } from "@/lib/soundManager";
+import { getSoundSettings, playNotificationSound } from "@/lib/soundManager";
 
 interface Props {
   data: DayData;
@@ -8,24 +8,8 @@ interface Props {
   extraSettings: ExtraSettings;
 }
 
-const namazNames: Record<string, string> = {
-  fajr: 'ফজর',
-  dhuhr: 'যোহর',
-  asr: 'আসর',
-  maghrib: 'মাগরিব',
-  isha: 'এশা',
-};
-
 const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
   const alertedRef = useRef<Set<string>>(new Set());
-
-  // Load voices on mount (needed for some browsers)
-  useEffect(() => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    }
-  }, []);
 
   useEffect(() => {
     const check = () => {
@@ -41,9 +25,6 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
           if (pTime && currentTime === pTime && !data.namaz[key] && !alertedRef.current.has(`namaz-${key}-${pTime}`)) {
             alertedRef.current.add(`namaz-${key}-${pTime}`);
             playNotificationSound('alert');
-            setTimeout(() => {
-              speakBengali(`আসসালামু আলাইকুম। এখন ${namazNames[key]} নামাজের সময় হয়েছে। অনুগ্রহ করে নামাজ পড়ুন। আল্লাহ আপনার নামাজ কবুল করুন।`);
-            }, 1500);
           }
         }
       }
@@ -57,9 +38,6 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
             if (currentTime === t && !taken && !alertedRef.current.has(`med-${med.id}-${t}`)) {
               alertedRef.current.add(`med-${med.id}-${t}`);
               playNotificationSound('alert');
-              setTimeout(() => {
-                speakBengali(`ওষুধ খাওয়ার সময় হয়েছে। ${med.name} ওষুধটি এখন খেয়ে নিন। সুস্থ থাকুন।`);
-              }, 1500);
             }
           }
         }
@@ -71,9 +49,6 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
           if (task.time && currentTime === task.time && !task.done && !alertedRef.current.has(`task-${task.id}-${task.time}`)) {
             alertedRef.current.add(`task-${task.id}-${task.time}`);
             playNotificationSound('gentle');
-            setTimeout(() => {
-              speakBengali(`আপনার একটি কাজের সময় হয়েছে। ${task.text} কাজটি এখন শুরু করুন।`);
-            }, 1500);
           }
         }
       }
@@ -83,9 +58,6 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
         if (currentTime === extraSettings.sleepTime && !data.sleepStart && !alertedRef.current.has(`sleep-${extraSettings.sleepTime}`)) {
           alertedRef.current.add(`sleep-${extraSettings.sleepTime}`);
           playNotificationSound('reminder');
-          setTimeout(() => {
-            speakBengali(`ঘুমানোর সময় হয়ে গেছে। পর্যাপ্ত ঘুম আপনার শরীর ও মনের জন্য খুবই জরুরি। এখন বিশ্রাম নিন এবং ভালো ঘুম হোক।`);
-          }, 1500);
         }
       }
 
@@ -95,10 +67,6 @@ const SoundAlertManager = ({ data, namazTimes, extraSettings }: Props) => {
         if (!alertedRef.current.has(hourKey)) {
           alertedRef.current.add(hourKey);
           playNotificationSound('reminder');
-          const remaining = 8 - data.water;
-          setTimeout(() => {
-            speakBengali(`পানি পান করার সময়। আজ আপনি ${data.water} গ্লাস পানি খেয়েছেন। আরো ${remaining} গ্লাস বাকি আছে। সুস্থ থাকতে পর্যাপ্ত পানি পান করুন।`);
-          }, 1500);
         }
       }
     };
