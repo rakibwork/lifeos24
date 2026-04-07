@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTodayStr, loadDayData, saveDayData, getGoals, saveGoals, getPermNotes, savePermNotes, getAccounts, saveAccounts, getQuickNotes, saveQuickNotes, getHabitDefinitions, saveHabitDefinitions, getNamazTimes, getExtraSettings, getSoundSettings, saveExtraSettings, getMonthlyExpenses, subscribeToUserData } from "@/lib/dataStore";
 import type { DayData, Goal, PermNote, ExtraSettings, NamazTimes, Habit, AccountPerson, Medicine } from "@/lib/types";
 import { defaultSoundSettings, type SoundSettings } from "@/lib/soundManager";
-import { isAdmin } from "@/lib/adminStore";
+import { isAdmin, getMyStatus } from "@/lib/adminStore";
 import NavBar from "@/components/dashboard/NavBar";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import NotificationToast from "@/components/dashboard/NotificationToast";
@@ -63,6 +63,8 @@ const DashboardPage = () => {
   const [showNewDay, setShowNewDay] = useState(false);
   const [noDataDate, setNoDataDate] = useState<string | null>(null);
   const [mobileSection, setMobileSection] = useState("home");
+  const [isVerified, setIsVerified] = useState(false);
+  const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockUntil?: string; reason?: string } | null>(null);
 
   // Load user
   useEffect(() => {
@@ -75,6 +77,22 @@ const DashboardPage = () => {
       }
       const admin = await isAdmin();
       setUserIsAdmin(admin);
+
+      // Check verified & lock status
+      if (user) {
+        const { data: pData } = await supabase.from("profiles").select("is_verified, status, lock_until, suspend_reason").eq("user_id", user.id).single();
+        if (pData) {
+          setIsVerified(!!(pData as any).is_verified);
+          const st = (pData as any).status;
+          const lu = (pData as any).lock_until;
+          const sr = (pData as any).suspend_reason;
+          if (st === 'locked' && lu && new Date(lu) > new Date()) {
+            setLockInfo({ locked: true, lockUntil: lu, reason: sr || undefined });
+          } else {
+            setLockInfo(null);
+          }
+        }
+      }
     };
     loadUser();
   }, [showProfile]);
@@ -254,15 +272,38 @@ const DashboardPage = () => {
         onLogout={handleLogout}
         isAdmin={userIsAdmin}
         onAdmin={() => navigate("/admin")}
+        isVerified={isVerified}
         notificationSlot={
           <NotificationBell data={data} namazTimes={namazTimes} extraSettings={extraSettings} goals={goals} />
         }
       />
 
+      {/* Lock overlay */}
+      {lockInfo?.locked && (
+        <div className="bg-purple-500/10 border-b-2 border-purple-500/30 p-4">
+          <div className="max-w-6xl mx-auto flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center shrink-0">
+              <span className="text-lg">🔒</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-purple-700">অ্যাকাউন্ট লক করা আছে</p>
+              {lockInfo.lockUntil && (
+                <p className="text-xs text-purple-600">
+                  আনলক হবে: {new Date(lockInfo.lockUntil).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              )}
+              {lockInfo.reason && (
+                <p className="text-xs text-purple-600 mt-0.5">কারণ: {lockInfo.reason}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Live notification toasts */}
       <NotificationToast data={data} namazTimes={namazTimes} extraSettings={extraSettings} goals={goals} />
 
-      <main className="max-w-6xl mx-auto p-2 md:p-8 space-y-3 md:space-y-6">
+      <main className={`max-w-6xl mx-auto p-2 md:p-8 space-y-3 md:space-y-6 ${lockInfo?.locked ? 'pointer-events-none opacity-50 select-none' : ''}`}>
         {showInMobile("home") && (
           <>
             <AdminNotifBanner />
