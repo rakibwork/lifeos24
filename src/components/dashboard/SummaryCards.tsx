@@ -19,8 +19,8 @@ const SummaryCards = ({ data, accounts, monthlyExpense, extraSettings }: Props) 
 
   const cards = [
     { icon: "💰", label: "আজকের খরচ", value: `৳${todayExp}`, color: "border-b-primary bg-life-blue-light" },
-    { icon: "🛒", label: "বাজার", value: `৳${todayBazar}`, color: "border-b-life-teal bg-life-teal-light" },
-    { icon: "👤", label: "ব্যাক্তিগত", value: `৳${todayPersonal}`, color: "border-b-life-purple bg-life-purple-light" },
+    { icon: "🛒", label: "বাজার খরচ", value: `৳${todayBazar}`, color: "border-b-life-teal bg-life-teal-light" },
+    { icon: "👤", label: "ব্যাক্তিগত খরচ", value: `৳${todayPersonal}`, color: "border-b-life-purple bg-life-purple-light" },
     { icon: "📊", label: "মাসিক খরচ", value: `৳${monthlyExpense}`, sub: extraSettings.monthlyLimit ? `/ ৳${extraSettings.monthlyLimit}` : undefined, color: "border-b-life-orange bg-life-orange-light" },
     { icon: "📗", label: "মোট পাওনা", value: `৳${totalPawa}`, color: "border-b-life-emerald bg-life-emerald-light" },
     { icon: "📕", label: "মোট দেনা", value: `৳${totalDena}`, color: "border-b-destructive bg-life-red-light" },
