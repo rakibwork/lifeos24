@@ -156,20 +156,14 @@ const WeeklyAnalytics = () => {
       <div className="text-xs text-muted-foreground font-medium mb-1.5 flex items-center gap-1">
         {currentTab.icon} প্রতিদিনের {currentTab.label}
       </div>
-      <div className="h-44 bg-gradient-to-b from-secondary/30 to-secondary/10 rounded-xl p-2 pt-3">
+      <div className="h-44 rounded-xl p-1">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={weekData} barCategoryGap="25%">
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+          <BarChart data={weekData} barCategoryGap="15%">
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.4} />
             <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} axisLine={false} tickLine={false} dy={4} />
             <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={28} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.2)', radius: 8 }} />
-            <Bar dataKey={currentTab.dataKey as string} radius={[8, 8, 3, 3]} maxBarSize={40} animationDuration={600}>
-              {weekData.map((entry, i) => {
-                const val = entry[currentTab.dataKey] as number;
-                const opacity = max > 0 ? 0.45 + (val / max) * 0.55 : 0.5;
-                return <Cell key={i} fill={currentTab.color} fillOpacity={opacity} />;
-              })}
-            </Bar>
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.15)' }} />
+            <Bar dataKey={currentTab.dataKey as string} fill={currentTab.color} radius={[4, 4, 0, 0]} maxBarSize={32} animationDuration={500} />
           </BarChart>
         </ResponsiveContainer>
       </div>
