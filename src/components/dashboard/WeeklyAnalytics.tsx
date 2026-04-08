@@ -156,14 +156,19 @@ const WeeklyAnalytics = () => {
       <div className="text-xs text-muted-foreground font-medium mb-1.5 flex items-center gap-1">
         {currentTab.icon} প্রতিদিনের {currentTab.label}
       </div>
-      <div className="h-44 rounded-xl p-1">
+      <div className="h-52 rounded-xl p-1">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={weekData} barCategoryGap="15%">
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.4} />
-            <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} axisLine={false} tickLine={false} dy={4} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={28} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.15)' }} />
-            <Bar dataKey={currentTab.dataKey as string} fill={currentTab.color} radius={[4, 4, 0, 0]} maxBarSize={32} animationDuration={500} />
+          <BarChart data={weekData} barCategoryGap="20%">
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.3} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }} axisLine={false} tickLine={false} dy={6} />
+            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.1)' }} />
+            <Bar dataKey={currentTab.dataKey as string} radius={[6, 6, 0, 0]} maxBarSize={38} animationDuration={600}>
+              {weekData.map((entry, i) => {
+                const val = entry[currentTab.dataKey] as number;
+                return <Cell key={i} fill={currentTab.color} fillOpacity={max > 0 ? 0.4 + (val / max) * 0.6 : 0.3} />;
+              })}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
