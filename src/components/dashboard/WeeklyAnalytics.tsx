@@ -173,20 +173,6 @@ const WeeklyAnalytics = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Daily breakdown */}
-      <div className="mt-3 grid grid-cols-7 gap-1">
-        {weekData.map((d, i) => {
-          const val = d[currentTab.dataKey] as number;
-          return (
-            <div key={i} className="text-center">
-              <div className="text-[10px] text-muted-foreground font-medium">{d.label}</div>
-              <div className="text-xs font-bold" style={{ color: val > 0 ? currentTab.color : undefined }}>
-                {val > 0 ? (isMoneyTab ? toBn(val) : toBn(val)) : '—'}
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 };
