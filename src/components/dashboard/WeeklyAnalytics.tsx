@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
 import { loadDayData } from "@/lib/dataStore";
 import type { DayData } from "@/lib/types";
 
@@ -156,16 +156,17 @@ const WeeklyAnalytics = () => {
       <div className="text-xs text-muted-foreground font-medium mb-1.5 flex items-center gap-1">
         {currentTab.icon} প্রতিদিনের {currentTab.label}
       </div>
-      <div className="h-40 bg-secondary/20 rounded-xl p-1">
+      <div className="h-44 bg-gradient-to-b from-secondary/30 to-secondary/10 rounded-xl p-2 pt-3">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={weekData} barCategoryGap="20%">
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={30} />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)', radius: 6 }} />
-            <Bar dataKey={currentTab.dataKey as string} radius={[6, 6, 2, 2]} maxBarSize={36}>
+          <BarChart data={weekData} barCategoryGap="25%">
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+            <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} axisLine={false} tickLine={false} dy={4} />
+            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={28} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.2)', radius: 8 }} />
+            <Bar dataKey={currentTab.dataKey as string} radius={[8, 8, 3, 3]} maxBarSize={40} animationDuration={600}>
               {weekData.map((entry, i) => {
                 const val = entry[currentTab.dataKey] as number;
-                const opacity = max > 0 ? 0.4 + (val / max) * 0.6 : 0.5;
+                const opacity = max > 0 ? 0.45 + (val / max) * 0.55 : 0.5;
                 return <Cell key={i} fill={currentTab.color} fillOpacity={opacity} />;
               })}
             </Bar>
