@@ -101,6 +101,16 @@ const WeeklyAnalytics = () => {
 
   if (loading) return <div className="animate-pulse h-48 bg-secondary rounded-2xl" />;
 
+  // Hex -> rgba helper for soft tinted backgrounds
+  const tint = (hex: string, alpha: number) => {
+    if (hex.startsWith('hsl')) return `hsl(var(--primary) / ${alpha})`;
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   return (
     <div className="bg-card rounded-2xl p-4 border-2 border-primary/30 shadow-sm">
       {/* Header */}
@@ -127,30 +137,45 @@ const WeeklyAnalytics = () => {
         ))}
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="bg-secondary/50 rounded-xl p-2.5 text-center">
-          <div className="text-lg">{currentTab.icon}</div>
-          <div className="text-[11px] text-muted-foreground font-medium">মোট</div>
-          <div className="text-sm font-bold" style={{ color: currentTab.color }}>
+      {/* Summary cards — 2 big soft-tinted cards */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div
+          className="rounded-2xl p-4 text-center border"
+          style={{
+            backgroundColor: tint(currentTab.color, 0.08),
+            borderColor: tint(currentTab.color, 0.18),
+          }}
+        >
+          <div className="text-3xl mb-1">{currentTab.icon}</div>
+          <div className="text-xs text-muted-foreground font-medium mb-1">মোট {currentTab.label}</div>
+          <div className="text-xl font-extrabold" style={{ color: currentTab.color }}>
             {formatVal(Math.round(total * 10) / 10)} {!isMoneyTab && currentTab.unit}
           </div>
         </div>
-        <div className="bg-secondary/50 rounded-xl p-2.5 text-center">
-          <div className="text-lg">📈</div>
-          <div className="text-[11px] text-muted-foreground font-medium">দৈনিক গড়</div>
-          <div className="text-sm font-bold" style={{ color: currentTab.color }}>
+        <div
+          className="rounded-2xl p-4 text-center border"
+          style={{
+            backgroundColor: tint(currentTab.color, 0.08),
+            borderColor: tint(currentTab.color, 0.18),
+          }}
+        >
+          <div className="text-3xl mb-1">📈</div>
+          <div className="text-xs text-muted-foreground font-medium mb-1">দৈনিক গড়</div>
+          <div className="text-xl font-extrabold" style={{ color: currentTab.color }}>
             {formatVal(Math.round(avg * 10) / 10)} {!isMoneyTab && currentTab.unit}
           </div>
         </div>
-        <div className="bg-secondary/50 rounded-xl p-2.5 text-center">
-          <div className="text-lg">🏆</div>
-          <div className="text-[11px] text-muted-foreground font-medium">সেরা দিন</div>
-          <div className="text-sm font-bold" style={{ color: currentTab.color }}>
-            {bestDay ? bestDay.label : '—'}
-          </div>
-        </div>
       </div>
+
+      {/* Best day pill */}
+      {bestDay && (
+        <div className="flex items-center justify-center gap-2 mb-3 text-xs">
+          <span className="text-muted-foreground">🏆 সেরা দিন:</span>
+          <span className="font-bold px-2.5 py-0.5 rounded-full" style={{ backgroundColor: tint(currentTab.color, 0.15), color: currentTab.color }}>
+            {bestDay.label} — {formatVal(max)} {!isMoneyTab && currentTab.unit}
+          </span>
+        </div>
+      )}
 
       {/* Chart */}
       <div className="text-xs text-muted-foreground font-medium mb-1.5 flex items-center gap-1">
