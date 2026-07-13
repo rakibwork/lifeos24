@@ -44,9 +44,11 @@ const ProfileModal = ({ onClose, onLogout }: Props) => {
       .eq("user_id", user.id)
       .single();
 
+    const fallbackName = (user.user_metadata?.full_name as string) || "";
+
     if (data) {
       setProfile({
-        full_name: data.full_name || "",
+        full_name: data.full_name || fallbackName,
         mobile: data.mobile || "",
         mobile_private: data.mobile_private ?? true,
         blood_group: data.blood_group || "",
