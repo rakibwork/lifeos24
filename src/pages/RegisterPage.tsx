@@ -37,6 +37,7 @@ const RegisterPage = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from("profiles").update({
+        full_name: fullName,
         mobile,
         birthdate: birthdate || null,
       }).eq("user_id", user.id);
