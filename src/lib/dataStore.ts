@@ -130,10 +130,12 @@ export async function getMonthlyExpenses(): Promise<number> {
 
 // Profile (still uses Supabase profiles table)
 export async function getProfile(): Promise<UserProfile> {
-  const userId = await getUserId();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id;
   if (!userId) return { name: 'ব্যবহারকারী', email: '' };
   const { data } = await supabase.from('profiles').select('full_name').eq('user_id', userId).single();
-  return { name: data?.full_name || 'ব্যবহারকারী', email: '' };
+  const name = data?.full_name || (user?.user_metadata?.full_name as string) || 'ব্যবহারকারী';
+  return { name, email: user?.email || '' };
 }
 
 export async function saveProfile(p: UserProfile): Promise<void> {
